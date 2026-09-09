@@ -3,12 +3,12 @@ const rotas = {
     'modulo1': { 
         html: 'modulos/modulo1.html', 
         js: 'js/modulos/modulo1.js', 
-        perfisPermitidos: ['master', 'gerente'] // Restrito apenas a Master e Gerente
+        perfisPermitidos: ['master', 'gerente'] 
     },
     'modulo2': { 
         html: 'modulos/modulo2.html', 
         js: 'js/modulos/modulo2.js', 
-        perfisPermitidos: ['master', 'gerente', 'admin', 'operacional'] // Administrador alimenta e gerencia o efetivo
+        perfisPermitidos: ['master', 'gerente', 'admin', 'operacional'] 
     },
     'modulo3': { 
         html: 'modulos/modulo3.html', 
@@ -18,17 +18,17 @@ const rotas = {
     'modulo4': { 
         html: 'modulos/modulo4.html', 
         js: 'js/modulos/modulo4.js', 
-        perfisPermitidos: ['master', 'gerente', 'admin'] // Restrito para upload e gestão de holerites em lote
+        perfisPermitidos: ['master', 'gerente', 'admin'] 
     },
     'modulo9': { 
         html: 'modulos/modulo9.html', 
         js: 'js/modulos/modulo9.js', 
-        perfisPermitidos: ['master', 'gerente', 'admin', 'operacional', 'colaborador'] // Todos visualizam o quadro informativo
+        perfisPermitidos: ['master', 'gerente', 'admin', 'operacional', 'colaborador'] 
     },
     'modulo10': { 
         html: 'modulos/modulo10.html', 
         js: 'js/modulos/modulo10.js', 
-        perfisPermitidos: ['master', 'gerente', 'admin', 'operacional', 'colaborador'] // Todos podem enviar dúvidas / supervisão responde
+        perfisPermitidos: ['master', 'gerente', 'admin', 'operacional', 'colaborador'] 
     }
 };
 
@@ -91,7 +91,7 @@ async function verificarPermissoesMenu() {
         const menuInformativos = document.getElementById('menu-informativos');
         const menuMensagens = document.getElementById('menu-mensagens');
 
-        // Garante que os novos menus apareçam para todos os usuários autenticados na sidebar
+        // Garante que os menus de informativos e mensagens apareçam para todos os usuários autenticados
         if (menuInformativos) menuInformativos.style.display = 'block';
         if (menuMensagens) menuMensagens.style.display = 'block';
 
@@ -100,26 +100,22 @@ async function verificarPermissoesMenu() {
             if (menuColaboradores) menuColaboradores.style.display = 'none';
             if (menuPortal) menuPortal.style.display = 'block';
             if (menuHolerites) menuHolerites.style.display = 'none';
-            window.carregarModulo('modulo3');
         } else if (window.userPerfil === 'operacional') {
             if (menuAdmin) menuAdmin.style.display = 'none';
             if (menuColaboradores) menuColaboradores.style.display = 'block';
             if (menuPortal) menuPortal.style.display = 'block';
             if (menuHolerites) menuHolerites.style.display = 'none';
-            window.carregarModulo('modulo2');
         } else if (window.userPerfil === 'admin') {
             if (menuAdmin) menuAdmin.style.display = 'none';
             if (menuColaboradores) menuColaboradores.style.display = 'block';
             if (menuPortal) menuPortal.style.display = 'block';
             if (menuHolerites) menuHolerites.style.display = 'block';
-            window.carregarModulo('modulo2');
         } else {
             // Master e Gerente
             if (menuAdmin) menuAdmin.style.display = 'block';
             if (menuColaboradores) menuColaboradores.style.display = 'block';
             if (menuPortal) menuPortal.style.display = 'block';
             if (menuHolerites) menuHolerites.style.display = 'block';
-            window.carregarModulo('modulo1');
         }
     } catch (e) {
         console.error("Erro ao carregar permissões do menu:", e);
