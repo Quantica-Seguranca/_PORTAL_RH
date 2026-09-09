@@ -19,6 +19,16 @@ const rotas = {
         html: 'modulos/modulo4.html', 
         js: 'js/modulos/modulo4.js', 
         perfisPermitidos: ['master', 'gerente', 'admin'] // Restrito para upload e gestão de holerites em lote
+    },
+    'modulo9': { 
+        html: 'modulos/modulo9.html', 
+        js: 'js/modulos/modulo9.js', 
+        perfisPermitidos: ['master', 'gerente', 'admin', 'operacional', 'colaborador'] // Todos visualizam o quadro informativo
+    },
+    'modulo10': { 
+        html: 'modulos/modulo10.html', 
+        js: 'js/modulos/modulo10.js', 
+        perfisPermitidos: ['master', 'gerente', 'admin', 'operacional', 'colaborador'] // Todos podem enviar dúvidas / supervisão responde
     }
 };
 
@@ -78,6 +88,12 @@ async function verificarPermissoesMenu() {
         const menuColaboradores = document.getElementById('menu-colaboradores');
         const menuPortal = document.getElementById('menu-portal');
         const menuHolerites = document.getElementById('menu-holerites');
+        const menuInformativos = document.getElementById('menu-informativos');
+        const menuMensagens = document.getElementById('menu-mensagens');
+
+        // Garante que os novos menus apareçam para todos os usuários autenticados na sidebar
+        if (menuInformativos) menuInformativos.style.display = 'block';
+        if (menuMensagens) menuMensagens.style.display = 'block';
 
         if (window.userPerfil === 'colaborador') {
             if (menuAdmin) menuAdmin.style.display = 'none';
@@ -92,14 +108,13 @@ async function verificarPermissoesMenu() {
             if (menuHolerites) menuHolerites.style.display = 'none';
             window.carregarModulo('modulo2');
         } else if (window.userPerfil === 'admin') {
-            // Administrador focado em alimentar o sistema e gerenciar holerites (sem acesso ao Módulo 1 de usuários)
             if (menuAdmin) menuAdmin.style.display = 'none';
             if (menuColaboradores) menuColaboradores.style.display = 'block';
             if (menuPortal) menuPortal.style.display = 'block';
             if (menuHolerites) menuHolerites.style.display = 'block';
             window.carregarModulo('modulo2');
         } else {
-            // Master e Gerente (Controle total de usuários, efetivo, holerites e portal)
+            // Master e Gerente
             if (menuAdmin) menuAdmin.style.display = 'block';
             if (menuColaboradores) menuColaboradores.style.display = 'block';
             if (menuPortal) menuPortal.style.display = 'block';
