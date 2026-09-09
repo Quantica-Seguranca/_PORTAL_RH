@@ -1,80 +1,49 @@
 <header class="app-header">
     <div class="header-left">
-        <h2 class="page-title">Dashboard Executivo</h2>
+        <h2 class="page-title">Quadro Informativo e Comunicados</h2>
     </div>
     <div class="header-right">
-        <span style="color: var(--success-600); font-size: 0.875rem; display: flex; align-items: center; gap: 0.5rem;">
-            <span style="display: inline-block; width: 8px; height: 8px; background: var(--success-600); border-radius: 50%; box-shadow: 0 0 8px var(--success-600); animation: pulse 2s infinite;"></span>
-            Monitoramento ao vivo
-        </span>
+        <span id="user-display" style="color:white;"></span>
     </div>
 </header>
 
 <div class="content-area">
-    <!-- KPIs Consolidados -->
-    <div class="dashboard-grid mb-4">
-        <div class="stat-card">
-            <div class="stat-card__content">
-                <span class="stat-card__label">Colaboradores Ativos</span>
-                <span class="stat-card__value" id="kpi-colab">0</span>
+    <!-- Bloco de Notas / Quadro Informativo Oficial -->
+    <div class="panel p-6" style="background: var(--primary-900); border: 1px solid var(--primary-700); border-radius: 8px; max-width: 900px; margin: 0 auto;">
+        
+        <!-- Cabeçalho do Bloco -->
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--primary-700); padding-bottom: 1rem; margin-bottom: 1.5rem;">
+            <div>
+                <h3 id="bloco-titulo-display" style="color: var(--accent-500); font-size: 1.25rem; font-weight: bold; margin: 0;">📌 Bloco de Notas da Operação</h3>
+                <span id="bloco-data-info" style="font-size: 0.75rem; color: var(--primary-400);">Carregando informações...</span>
             </div>
+            <span style="background: var(--primary-800); color: var(--primary-300); padding: 0.25rem 0.75rem; border-radius: 4px; font-size: 0.75rem;">Canal Oficial</span>
         </div>
-        <div class="stat-card">
-            <div class="stat-card__content">
-                <span class="stat-card__label">Documentos Publicados</span>
-                <span class="stat-card__value" id="kpi-docs">0</span>
-            </div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-card__content">
-                <span class="stat-card__label" style="color: var(--info-600);">Acessos (24h)</span>
-                <span class="stat-card__value" id="kpi-views">0</span>
-            </div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-card__content">
-                <span class="stat-card__label" style="color: var(--danger-600);">E-mails Falhos</span>
-                <span class="stat-card__value" id="kpi-falhas">0</span>
-            </div>
-        </div>
-    </div>
 
-    <!-- Gráficos -->
-    <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
-        <div class="panel" style="flex: 1; min-width: 300px; padding: 1.5rem;">
-            <h3 style="color: var(--white); margin-bottom: 1rem; font-size: 1rem; font-weight: 600;">Documentos por Categoria</h3>
-            <div style="position: relative; height: 250px;">
-                <canvas id="grafico-categorias"></canvas>
-            </div>
+        <!-- Visão de Leitura (Para todo o efetivo operacional) -->
+        <div id="bloco-view-mode" style="background: var(--primary-950); padding: 1.5rem; border-radius: 6px; border-left: 4px solid var(--accent-500); color: var(--primary-200); font-size: 1rem; line-height: 1.6; white-space: pre-wrap; min-height: 150px;">
+            Carregando diretrizes operacionais...
         </div>
-        <div class="panel" style="flex: 2; min-width: 400px; padding: 1.5rem;">
-            <h3 style="color: var(--white); margin-bottom: 1rem; font-size: 1rem; font-weight: 600;">Status de Envios de E-mail (Histórico)</h3>
-            <div style="position: relative; height: 250px;">
-                <canvas id="grafico-emails"></canvas>
-            </div>
-        </div>
-    </div>
 
-    <!-- Tabela: Últimos Acessos ao Portal -->
-    <div class="panel">
-        <div class="panel__header" style="border-bottom: 1px solid var(--primary-700);">
-            <h3 style="color: var(--white); font-size: 1rem; font-weight: 600;">Últimos Acessos ao Portal ASP</h3>
+        <!-- Visão de Edição em Bloco de Notas (Apenas Master, Gerência e Administradores) -->
+        <div id="bloco-edit-mode" style="display: none; margin-top: 1.5rem; border-top: 1px dashed var(--primary-700); padding-top: 1.5rem;">
+            <h4 style="color: white; font-size: 0.95rem; margin-bottom: 1rem;">✏️ Painel de Edição da Supervisão</h4>
+            
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; font-size: 0.8rem; color: var(--primary-400); margin-bottom: 0.25rem;">Título do Comunicado</label>
+                <input type="text" id="bloco-input-titulo" class="form-input" style="width: 100%; background: var(--primary-950); border: 1px solid var(--primary-700); color: white; padding: 0.75rem; border-radius: 4px;" placeholder="Ex: Escala de Serviço e Alinhamento Geral">
+            </div>
+
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; font-size: 0.8rem; color: var(--primary-400); margin-bottom: 0.25rem;">Conteúdo / Anotações do Bloco</label>
+                <textarea id="bloco-input-conteudo" rows="8" class="form-input" style="width: 100%; background: var(--primary-950); border: 1px solid var(--primary-700); color: white; padding: 0.75rem; border-radius: 4px; resize: vertical; font-family: inherit;" placeholder="Escreva aqui as diretrizes, avisos ou recados importantes para o efetivo..."></textarea>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <button id="bloco-btn-salvar" class="btn btn-primary" style="background: var(--accent-600); color: white; border: none; padding: 0.6rem 1.5rem; border-radius: 4px; cursor: pointer; font-weight: bold;">Salvar e Publicar no Bloco</button>
+                <span id="bloco-status-msg" style="font-size: 0.85rem;"></span>
+            </div>
         </div>
-        <div class="table-wrapper">
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>Data / Hora</th>
-                        <th>Colaborador</th>
-                        <th>Perfil</th>
-                        <th>Documento Acessado</th>
-                        <th>Ação</th>
-                    </tr>
-                </thead>
-                <tbody id="tabela-ultimos-acessos">
-                    <tr><td colspan="5" class="text-center">Sincronizando dados em tempo real...</td></tr>
-                </tbody>
-            </table>
-        </div>
+
     </div>
 </div>
