@@ -1,0 +1,32 @@
+<header class="app-header">
+    <div class="header-left">
+        <h2 class="page-title">Central de Dúvidas e Suporte</h2>
+    </div>
+    <div class="header-right">
+        <span id="user-display" style="color:white;"></span>
+    </div>
+</header>
+
+<div class="content-area">
+    <!-- Caixa de Envio de Dúvida -->
+    <div id="painel-enviar-duvida" class="panel p-6" style="background: var(--primary-900); border: 1px solid var(--primary-700); margin-bottom: 1.5rem; border-radius: 8px;">
+        <h3 style="color: var(--accent-500); font-size: 1.1rem; margin-bottom: 1rem;">✍️ Enviar Nova Dúvida à Supervisão</h3>
+        <p style="font-size: 0.85rem; color: var(--primary-400); margin-bottom: 1rem;">Utilize este canal oficial para tirar dúvidas sobre escalas, procedimentos operacionais, holerites ou relatar situações administrativas.</p>
+        
+        <textarea id="input-duvida-texto" rows="4" class="form-input" style="width: 100%; background: var(--primary-950); border: 1px solid var(--primary-700); color: white; padding: 0.75rem; border-radius: 4px; resize: vertical; font-family: inherit;" placeholder="Escreva sua dúvida ou solicitação aqui..."></textarea>
+        
+        <div style="display: flex; align-items: center; gap: 1rem; margin-top: 1rem;">
+            <button id="btn-enviar-duvida" class="btn btn-primary" style="background: var(--accent-600); color: white; border: none; padding: 0.6rem 1.5rem; border-radius: 4px; cursor: pointer; font-weight: bold;">Enviar Mensagem</button>
+            <span id="duvida-status-msg" style="font-size: 0.85rem;"></span>
+        </div>
+    </div>
+
+    <!-- Histórico de Mensagens / Respostas da Supervisão -->
+    <div class="panel p-6" style="background: var(--primary-900); border: 1px solid var(--primary-700); border-radius: 8px;">
+        <h3 style="color: white; font-size: 1.1rem; margin-bottom: 1rem;">💬 Histórico de Comunicações</h3>
+        <div id="lista-mensagens-container" style="display: flex; flex-direction: column; gap: 1rem;">
+            <!-- Os cards de mensagens e campos de resposta serão injetados aqui pelo JavaScript -->
+            <p style="color: var(--primary-400);">Carregando histórico de mensagens...</p>
+        </div>
+    </div>
+</div>
