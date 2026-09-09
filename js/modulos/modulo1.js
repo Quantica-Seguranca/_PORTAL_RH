@@ -1,4 +1,4 @@
-// O código completo do Módulo 1 atualizado com suporte ao quadro informativo integrado
+// O código completo do Módulo 1 limpo, sem o quadro informativo integrado
 
 if (typeof window.modulo1Initialized === 'undefined') {
     window.modulo1Initialized = true;
@@ -20,98 +20,6 @@ if (typeof window.modulo1Initialized === 'undefined') {
         await loadStatistics();
         await loadUsers();
         await loadPreCadastros();
-        await inicializarQuadroInformativo();
-    }
-
-    async function inicializarQuadroInformativo() {
-        const viewMode = getEl('quadro-view-mode');
-        const editMode = getEl('quadro-edit-mode');
-        const inputTitulo = getEl('input-quadro-titulo');
-        const inputConteudo = getEl('input-quadro-conteudo');
-        const dataInfo = getEl('quadro-data-info');
-        const btnSalvar = getEl('btn-salvar-quadro');
-        const statusMsg = getEl('quadro-status-msg');
-        const tituloDisplay = getEl('quadro-titulo-display');
-
-        if (!viewMode) return;
-
-        const { data, error } = await window.supabaseClient
-            .from('quadro_informativo')
-            .select('*')
-            .order('atualizado_em', { ascending: false })
-            .limit(1);
-
-        let avisoAtual = { id: null, titulo: 'Quadro Informativo Oficial', conteudo: 'Nenhum aviso publicado no momento.' };
-
-        if (!error && data && data.length > 0) {
-            avisoAtual = data[0];
-            viewMode.textContent = avisoAtual.conteudo;
-            if (tituloDisplay) tituloDisplay.textContent = `📢 ${avisoAtual.titulo}`;
-            if (avisoAtual.atualizado_em && dataInfo) {
-                const dataFmt = new Date(avisoAtual.atualizado_em).toLocaleString('pt-BR');
-                dataInfo.textContent = `Atualizado por ${avisoAtual.atualizado_por || 'Gestão'} em: ${dataFmt}`;
-            }
-        } else {
-            viewMode.textContent = avisoAtual.conteudo;
-        }
-
-        const usuarioLogado = window.usuarioAtual || JSON.parse(localStorage.getItem('usuario_logado') || '{}');
-        const cargoOuPerfil = String(usuarioLogado.perfil || usuarioLogado.cargo || '').toLowerCase();
-        
-        const perfisAutorizados = ['master', 'gerencia', 'gerente', 'administrador', 'admin'];
-        const temPermissao = perfisAutorizados.some(p => cargoOuPerfil.includes(p)) || (usuarioLogado.email && usuarioLogado.email.includes('admin'));
-
-        if (temPermissao && editMode) {
-            editMode.style.display = 'block';
-            if (inputTitulo) inputTitulo.value = avisoAtual.titulo;
-            if (inputConteudo) inputConteudo.value = avisoAtual.conteudo;
-
-            if (btnSalvar) {
-                btnSalvar.onclick = async () => {
-                    btnSalvar.disabled = true;
-                    if (statusMsg) {
-                        statusMsg.textContent = 'Salvando...';
-                        statusMsg.style.color = 'var(--primary-300)';
-                    }
-
-                    const payload = {
-                        titulo: inputTitulo.value.trim(),
-                        conteudo: inputConteudo.value.trim(),
-                        atualizado_por: usuarioLogado.nome_completo || usuarioLogado.email || 'Gestão',
-                        atualizado_em: new Date().toISOString()
-                    };
-
-                    let res;
-                    if (avisoAtual.id) {
-                        res = await window.supabaseClient
-                            .from('quadro_informativo')
-                            .update(payload)
-                            .eq('id', avisoAtual.id);
-                    } else {
-                        res = await window.supabaseClient
-                            .from('quadro_informativo')
-                            .insert([payload]);
-                    }
-
-                    if (res.error) {
-                        if (statusMsg) {
-                            statusMsg.textContent = 'Erro ao salvar!';
-                            statusMsg.style.color = 'var(--danger-600)';
-                        }
-                    } else {
-                        if (statusMsg) {
-                            statusMsg.textContent = 'Publicado com sucesso!';
-                            statusMsg.style.color = 'var(--success-600)';
-                        }
-                        setTimeout(() => {
-                            if (statusMsg) statusMsg.textContent = '';
-                            inicializarQuadroInformativo();
-                        }, 2000);
-                    }
-                    btnSalvar.disabled = false;
-                };
-            }
-        }
     }
 
     async function loadStatistics() {
