@@ -48,18 +48,23 @@ window.carregarModulo = async function(nomeModulo) {
     }
 
     try {
-        const resposta = await fetch(rota.html);
+        // TRUQUE ANTI-CACHE: Adiciona um timestamp na URL para forçar o navegador a baixar sempre a versão mais recente do HTML
+        const versao = new Date().getTime();
+        const resposta = await fetch(`${rota.html}?v=${versao}`);
+        
         if (!resposta.ok) throw new Error("Arquivo HTML não encontrado");
         
         const html = await resposta.text();
         document.getElementById('conteudo-principal').innerHTML = html;
 
+        // Remove o script antigo da memória
         const scriptAntigo = document.getElementById('script-modulo-ativo');
         if (scriptAntigo) scriptAntigo.remove();
 
         if (rota.js) {
+            // Cria e injeta o novo script com o TRUQUE ANTI-CACHE
             const script = document.createElement('script');
-            script.src = rota.js;
+            script.src = `${rota.js}?v=${versao}`; // Garante que o JS mais novo será executado
             script.id = 'script-modulo-ativo';
             document.body.appendChild(script);
         }
@@ -91,7 +96,6 @@ async function verificarPermissoesMenu() {
         const menuInformativos = document.getElementById('menu-informativos');
         const menuMensagens = document.getElementById('menu-mensagens');
 
-        // Garante que os menus de informativos e mensagens apareçam para todos os usuários autenticados
         if (menuInformativos) menuInformativos.style.display = 'block';
         if (menuMensagens) menuMensagens.style.display = 'block';
 
@@ -100,22 +104,29 @@ async function verificarPermissoesMenu() {
             if (menuColaboradores) menuColaboradores.style.display = 'none';
             if (menuPortal) menuPortal.style.display = 'block';
             if (menuHolerites) menuHolerites.style.display = 'none';
+            window.carregarModulo('modulo3'); // Autoload ao logar
+            
         } else if (window.userPerfil === 'operacional') {
             if (menuAdmin) menuAdmin.style.display = 'none';
             if (menuColaboradores) menuColaboradores.style.display = 'block';
             if (menuPortal) menuPortal.style.display = 'block';
             if (menuHolerites) menuHolerites.style.display = 'none';
+            window.carregarModulo('modulo2'); // Autoload ao logar
+            
         } else if (window.userPerfil === 'admin') {
             if (menuAdmin) menuAdmin.style.display = 'none';
             if (menuColaboradores) menuColaboradores.style.display = 'block';
             if (menuPortal) menuPortal.style.display = 'block';
             if (menuHolerites) menuHolerites.style.display = 'block';
+            window.carregarModulo('modulo2'); // Autoload ao logar
+            
         } else {
             // Master e Gerente
             if (menuAdmin) menuAdmin.style.display = 'block';
             if (menuColaboradores) menuColaboradores.style.display = 'block';
             if (menuPortal) menuPortal.style.display = 'block';
             if (menuHolerites) menuHolerites.style.display = 'block';
+            window.carregarModulo('modulo1'); // Autoload ao logar
         }
     } catch (e) {
         console.error("Erro ao carregar permissões do menu:", e);
