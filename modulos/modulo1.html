@@ -8,6 +8,34 @@
 </header>
 
 <div class="content-area">
+    <!-- Quadro Informativo Institucional -->
+    <div class="panel" style="margin-bottom: 1.5rem; border-left: 4px solid var(--accent-600, #f59e0b);">
+        <div class="panel__header" style="display: flex; justify-content: space-between; align-items: center;">
+            <h3 class="text-white text-md font-bold" id="quadro-titulo-display">📢 Quadro Informativo Oficial</h3>
+            <span id="quadro-data-info" style="font-size: 0.75rem; color: var(--primary-400);">Carregando...</span>
+        </div>
+        <div class="panel__body" style="padding: 1rem 0;">
+            <!-- Visão de Leitura (Para todos os colaboradores) -->
+            <div id="quadro-view-mode" style="color: var(--primary-200); font-size: 0.95rem; line-height: 1.5; white-space: pre-wrap;">
+                Carregando comunicados...
+            </div>
+
+            <!-- Visão de Edição (Apenas para Master, Gerência ou Administrador) -->
+            <div id="quadro-edit-mode" style="display: none; margin-top: 1rem; border-top: 1px solid var(--primary-700); padding-top: 1rem;">
+                <div style="margin-bottom: 0.75rem;">
+                    <label style="display: block; font-size: 0.8rem; color: var(--accent-500); margin-bottom: 0.25rem;">Título do Comunicado</label>
+                    <input type="text" id="input-quadro-titulo" class="form-input" style="width: 100%; background: var(--primary-900); border: 1px solid var(--primary-700); color: white; padding: 0.5rem; border-radius: 4px;">
+                </div>
+                <div style="margin-bottom: 0.75rem;">
+                    <label style="display: block; font-size: 0.8rem; color: var(--accent-500); margin-bottom: 0.25rem;">Mensagem / Diretrizes para o Efetivo</label>
+                    <textarea id="input-quadro-conteudo" rows="4" class="form-input" style="width: 100%; background: var(--primary-900); border: 1px solid var(--primary-700); color: white; padding: 0.5rem; border-radius: 4px; resize: vertical;"></textarea>
+                </div>
+                <button id="btn-salvar-quadro" class="btn btn-sm btn-primary" style="background: var(--accent-600); color: white; border: none; padding: 0.4rem 1rem; border-radius: 4px; cursor: pointer; font-weight: bold;">Publicar Atualização</button>
+                <span id="quadro-status-msg" style="margin-left: 1rem; font-size: 0.85rem;"></span>
+            </div>
+        </div>
+    </div>
+
     <!-- Estatísticas -->
     <div class="dashboard-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
         <div class="stat-card panel p-4">
@@ -102,7 +130,7 @@
                 <div class="form-row" style="margin-bottom: 1rem; display: flex; flex-direction: column; gap: 0.75rem;">
                     <input type="password" name="password" placeholder="Senha Temporária" class="form-input" required>
                     <select name="perfil" class="form-select" style="width: 100%; padding: 0.875rem 1rem; background: var(--primary-700); color: white; border: 1px solid var(--primary-600); border-radius: var(--radius-md);">
-                        <option value="colaborador">Colaborador (ASP)</option>
+                        <option value="colaborador">Colaborador</option>
                         <option value="operacional">Operador / Fiscal</option>
                         <option value="admin">Administrador</option>
                         <option value="gerente">Gerência</option>
