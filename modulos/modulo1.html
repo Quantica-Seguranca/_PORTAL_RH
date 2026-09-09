@@ -1,0 +1,116 @@
+<header class="app-header">
+    <div class="header-left">
+        <h2 class="page-title">Gestão de Usuários e Privilégios</h2>
+    </div>
+    <div class="header-right">
+        <span id="user-display" style="color:white;"></span>
+    </div>
+</header>
+
+<div class="content-area">
+    <!-- Estatísticas -->
+    <div class="dashboard-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+        <div class="stat-card panel p-4">
+            <div class="stat-card__content" style="display: flex; flex-direction: column;">
+                <span class="stat-card__label" style="font-size: 0.8rem; color: var(--primary-400);">Total Efetivo</span>
+                <span class="stat-card__value" id="stat-total" style="font-size: 1.5rem; font-weight: bold; color: white;">0</span>
+            </div>
+        </div>
+        <div class="stat-card panel p-4">
+            <div class="stat-card__content" style="display: flex; flex-direction: column;">
+                <span class="stat-card__label" style="font-size: 0.8rem; color: var(--primary-400);">Ativos</span>
+                <span class="stat-card__value" id="stat-active" style="font-size: 1.5rem; font-weight: bold; color: white;">0</span>
+            </div>
+        </div>
+        <div class="stat-card panel p-4">
+            <div class="stat-card__content" style="display: flex; flex-direction: column;">
+                <span class="stat-card__label" style="font-size: 0.8rem; color: var(--primary-400);">Operadores</span>
+                <span class="stat-card__value" id="stat-operators" style="font-size: 1.5rem; font-weight: bold; color: white;">0</span>
+            </div>
+        </div>
+        <div class="stat-card panel p-4">
+            <div class="stat-card__content" style="display: flex; flex-direction: column;">
+                <span class="stat-card__label" style="font-size: 0.8rem; color: var(--primary-400);">Admins / Gestão</span>
+                <span class="stat-card__value" id="stat-admins" style="font-size: 1.5rem; font-weight: bold; color: white;">0</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Painel de Aprovação de Pré-Cadastros Pendentes -->
+    <div class="panel p-6" style="margin-bottom: 1.5rem; border: 1px solid var(--accent-500);">
+        <h3 style="color: var(--accent-500); margin-bottom: 1rem; font-size: 1rem;">Solicitações de Pré-Cadastro Pendentes</h3>
+        <div class="table-wrapper">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Nome</th>
+                        <th>E-mail</th>
+                        <th>CPF</th>
+                        <th>Data Solicitação</th>
+                        <th style="text-align: center;">Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="pre-cadastros-table-body">
+                    <tr><td colspan="5" class="text-center" style="text-align: center; padding: 1rem;">Carregando solicitações...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Tabela e Controles de Gestão de Usuários -->
+    <div class="panel">
+        <div class="panel__header">
+            <div class="search-box">
+                <input type="text" id="search-users" class="search-box__input form-input" placeholder="Buscar por nome ou e-mail...">
+            </div>
+            <button id="btn-new-user" class="btn btn-primary">Novo Colaborador</button>
+        </div>
+        <div class="table-wrapper">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Nome</th>
+                        <th>E-mail</th>
+                        <th>Perfil / Privilégio</th>
+                        <th>Status</th>
+                        <th>Criado em</th>
+                        <th style="text-align: center;">Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="users-table-body">
+                    <!-- Preenchido dinamicamente via JS -->
+                </tbody>
+            </table>
+        </div>
+        <div id="pagination" class="pagination" style="padding: 1rem;"></div>
+    </div>
+</div>
+
+<!-- Modal de Novo Usuário -->
+<div id="modal-create-user" class="modal-overlay" style="display: none;">
+    <div class="modal">
+        <div class="modal__header">
+            <h3 class="modal__title">Cadastrar Novo Efetivo</h3>
+            <button class="modal-close btn-icon" type="button" style="color: white; font-size: 1.25rem; cursor: pointer;">X</button>
+        </div>
+        <div class="modal__body">
+            <form id="create-user-form">
+                <div class="form-row" style="margin-bottom: 1rem; display: flex; flex-direction: column; gap: 0.75rem;">
+                    <input type="text" name="nome" placeholder="Nome Completo" class="form-input" required>
+                    <input type="email" name="email" placeholder="E-mail" class="form-input" required>
+                </div>
+                <div class="form-row" style="margin-bottom: 1rem; display: flex; flex-direction: column; gap: 0.75rem;">
+                    <input type="password" name="password" placeholder="Senha Temporária" class="form-input" required>
+                    <select name="perfil" class="form-select" style="width: 100%; padding: 0.875rem 1rem; background: var(--primary-700); color: white; border: 1px solid var(--primary-600); border-radius: var(--radius-md);">
+                        <option value="colaborador">Colaborador (ASP)</option>
+                        <option value="operacional">Operador / Fiscal</option>
+                        <option value="admin">Administrador</option>
+                        <option value="gerente">Gerência</option>
+                        <option value="master">Master</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width:100%; margin-top: 10px;">Salvar Cadastro</button>
+            </form>
+        </div>
+    </div>
+</div>

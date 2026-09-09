@@ -1,0 +1,107 @@
+<header class="app-header">
+    <div class="header-left">
+        <h2 class="page-title">Envio Automático de E-mails</h2>
+    </div>
+</header>
+
+<div class="content-area">
+    <!-- Estatísticas -->
+    <div class="dashboard-grid mb-4">
+        <div class="stat-card"><div class="stat-card__content"><span class="stat-card__label">Total Enviados</span><span class="stat-card__value" id="email-enviados">0</span></div></div>
+        <div class="stat-card"><div class="stat-card__content"><span class="stat-card__label" style="color: var(--warning-600);">Pendentes na Fila</span><span class="stat-card__value" id="email-pendentes">0</span></div></div>
+        <div class="stat-card"><div class="stat-card__content"><span class="stat-card__label" style="color: var(--danger-600);">Falhas de Envio</span><span class="stat-card__value" id="email-falhas">0</span></div></div>
+        <div class="stat-card"><div class="stat-card__content"><span class="stat-card__label" style="color: var(--info-600);">Taxa de Entrega</span><span class="stat-card__value" id="email-taxa">0%</span></div></div>
+    </div>
+
+    <!-- Abas de Navegação -->
+    <div class="panel mb-4">
+        <div class="panel__header" style="flex-direction: row; gap: 1rem; border-bottom: 1px solid var(--primary-700);">
+            <button class="btn btn-primary tab-email-btn" data-target="aba-fila-emails">Fila e Histórico</button>
+            <button class="btn btn-secondary tab-email-btn" data-target="aba-modelos-emails">Modelos de E-mail</button>
+        </div>
+    </div>
+
+    <!-- Aba 1: Fila e Histórico -->
+    <div id="aba-fila-emails" class="panel tab-email-content">
+        <div class="panel__header panel__toolbar" style="flex-direction: row; flex-wrap: wrap; gap: 1rem;">
+            <div class="search-box" style="flex: 1; min-width: 200px;">
+                <input type="text" id="busca-email" class="search-box__input" placeholder="Buscar destinatário ou assunto...">
+            </div>
+            <select id="filtro-status-email" class="form-select" style="width: auto;">
+                <option value="">Todos os Status</option>
+                <option value="pendente">Pendente</option>
+                <option value="enviado">Enviado</option>
+                <option value="falha">Falha</option>
+            </select>
+        </div>
+        
+        <div class="table-wrapper">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Destinatário</th>
+                        <th>Assunto</th>
+                        <th>Status</th>
+                        <th>Data/Hora</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="tabela-fila-emails">
+                    <tr><td colspan="5" class="text-center">Carregando fila...</td></tr>
+                </tbody>
+            </table>
+        </div>
+        <div id="paginacao-emails" class="pagination">
+            <span class="pagination__info" id="info-pag-emails">Carregando...</span>
+            <div class="pagination__nav">
+                <button id="btn-ant-emails" class="pagination__btn">Anterior</button>
+                <button id="btn-prox-emails" class="pagination__btn">Próxima</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Aba 2: Modelos de E-mail -->
+    <div id="aba-modelos-emails" class="panel tab-email-content" style="display: none;">
+        <div style="display: flex; flex-wrap: wrap; gap: 1rem; padding: 1.25rem;">
+            
+            <!-- Lista de Modelos (Esquerda) -->
+            <div style="flex: 1; min-width: 250px; border-right: 1px solid var(--primary-700); padding-right: 1rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; mb-2;">
+                    <h4 style="color: var(--accent-500);">Modelos Ativos</h4>
+                    <button id="btn-novo-modelo" class="btn btn-sm btn-primary">Novo</button>
+                </div>
+                <div id="lista-modelos" style="margin-top: 1rem; display: flex; flex-direction: column; gap: 0.5rem;">
+                    <!-- Preenchido via JS -->
+                </div>
+            </div>
+
+            <!-- Editor de Modelo (Direita) -->
+            <div style="flex: 3; min-width: 300px; display: flex; flex-direction: column; gap: 1rem;">
+                <input type="hidden" id="modelo-id">
+                <div class="form-row">
+                    <input type="text" id="modelo-nome" class="form-input" placeholder="Nome interno do modelo (Ex: Novo Holerite)" required>
+                    <input type="text" id="modelo-chave" class="form-input" placeholder="Chave técnica (Ex: novo_holerite)" required>
+                </div>
+                <div class="form-row">
+                    <input type="text" id="modelo-assunto" class="form-input" placeholder="Assunto do E-mail (Aceita {{variaveis}})" required>
+                </div>
+                
+                <!-- Layout dividido para Código e Preview -->
+                <div style="display: flex; gap: 1rem; height: 300px;">
+                    <div style="flex: 1; display: flex; flex-direction: column;">
+                        <label class="form-label" style="margin-bottom: 0.5rem;">Código HTML</label>
+                        <textarea id="modelo-corpo" class="form-input" style="flex: 1; resize: none; font-family: monospace;" placeholder="Digite o HTML aqui..."></textarea>
+                    </div>
+                    <div style="flex: 1; display: flex; flex-direction: column;">
+                        <label class="form-label" style="margin-bottom: 0.5rem;">Pré-visualização</label>
+                        <div id="modelo-preview" style="flex: 1; background-color: var(--white); color: var(--black); padding: 1rem; border-radius: var(--radius-md); overflow-y: auto; border: 1px solid var(--primary-600);"></div>
+                    </div>
+                </div>
+
+                <div style="display: flex; justify-content: flex-end; gap: 0.5rem;">
+                    <button id="btn-salvar-modelo" class="btn btn-primary">Salvar Modelo</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

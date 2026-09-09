@@ -1,0 +1,83 @@
+<header class="app-header">
+    <div class="header-left">
+        <h2 class="page-title">Portal do Colaborador</h2>
+    </div>
+</header>
+
+<div class="content-area">
+    <!-- Navegação em Abas -->
+    <div class="panel mb-4">
+        <div class="panel__header" style="flex-direction: row; gap: 1rem; border-bottom: 1px solid var(--primary-700);">
+            <button class="btn btn-primary tab-btn" data-target="aba-perfil">Meu Perfil</button>
+            <button class="btn btn-secondary tab-btn" data-target="aba-holerites">Meus Holerites</button>
+            <button class="btn btn-secondary tab-btn" data-target="aba-documentos">Meus Documentos</button>
+            <button class="btn btn-secondary tab-btn" data-target="aba-historico">Histórico de Acessos</button>
+        </div>
+    </div>
+
+    <!-- Aba: Meu Perfil -->
+    <div id="aba-perfil" class="panel tab-content" style="padding: 1.5rem;">
+        <h3 style="color: var(--white); margin-bottom: 1rem; border-bottom: 1px solid var(--primary-700); padding-bottom: 0.5rem;">
+            Dados Cadastrais e Profissionais
+        </h3>
+        <div id="perfil-dados" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; color: var(--primary-300);">
+            <p>Carregando informações do ASP...</p>
+        </div>
+    </div>
+
+    <!-- Aba: Meus Holerites -->
+    <div id="aba-holerites" class="panel tab-content" style="display: none;">
+        <div class="table-wrapper">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Mês/Ano</th>
+                        <th>Arquivo</th>
+                        <th>Status</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="tabela-holerites-asp">
+                    <tr><td colspan="4" class="text-center">Aguardando dados...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Aba: Meus Documentos -->
+    <div id="aba-documentos" class="panel tab-content" style="display: none;">
+        <div class="table-wrapper">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Nome do Documento</th>
+                        <th>Categoria</th>
+                        <th>Data de Envio</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="tabela-documentos-asp">
+                    <tr><td colspan="4" class="text-center">Aguardando dados...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Aba: Histórico -->
+    <div id="aba-historico" class="panel tab-content" style="display: none;">
+        <div class="table-wrapper">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Data e Hora</th>
+                        <th>Ação Realizada</th>
+                        <th>Dispositivo / IP</th>
+                    </tr>
+                </thead>
+                <tbody id="tabela-historico-asp">
+                    <tr><td colspan="3" class="text-center">Aguardando dados...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

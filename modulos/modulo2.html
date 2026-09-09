@@ -1,0 +1,102 @@
+<header class="app-header">
+    <div class="header-left">
+        <h2 class="page-title">Cadastro de Efetivo Operacional</h2>
+    </div>
+</header>
+
+<div class="content-area">
+    <!-- Barra de Ferramentas e Filtros -->
+    <div class="panel mb-4">
+        <div class="panel__header panel__toolbar" style="flex-direction: row; flex-wrap: wrap; gap: 1rem;">
+            <div class="search-box" style="flex: 1; min-width: 250px;">
+                <input type="text" id="txtBuscaColaborador" class="search-box__input" placeholder="Buscar por matrícula, nome ou CPF...">
+            </div>
+            <select id="selFiltroEmpresa" class="form-select" style="width: auto;">
+                <option value="">Todas as Empresas</option>
+            </select>
+            <select id="selFiltroSituacao" class="form-select" style="width: auto;">
+                <option value="">Todas as Situações</option>
+                <option value="Ativo" selected>Ativos</option>
+                <option value="Inativo">Inativos</option>
+                <option value="Ferias">Férias</option>
+                <option value="Desligado">Desligados</option>
+            </select>
+            <button id="btnNovoColaborador" class="btn btn-primary">Novo Colaborador</button>
+        </div>
+        
+        <!-- Tabela de Colaboradores -->
+        <div class="table-wrapper">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Matrícula</th>
+                        <th>Colaborador</th>
+                        <th>CPF</th>
+                        <th>Empresa / Setor</th>
+                        <th>Situação</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="tabelaColaboradores">
+                    <tr><td colspan="6" class="text-center">Carregando efetivo...</td></tr>
+                </tbody>
+            </table>
+        </div>
+        <div id="paginacaoColaboradores" class="pagination">
+            <span class="pagination__info" id="infoPaginacaoColaboradores">Carregando...</span>
+            <div class="pagination__nav">
+                <button id="btnAnteriorColab" class="pagination__btn">Anterior</button>
+                <button id="btnProximoColab" class="pagination__btn">Próxima</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Cadastro / Edição -->
+<div id="modalColaborador" class="modal-overlay">
+    <div class="modal" style="max-width: 700px;">
+        <div class="modal__header">
+            <h3 class="modal__title" id="tituloModalColaborador">Cadastrar Novo Colaborador</h3>
+            <button class="modal-close btn-icon" id="btnFecharModalColab">X</button>
+        </div>
+        <div class="modal__body">
+            <form id="formColaborador">
+                <input type="hidden" id="colaboradorId">
+                
+                <h4 style="margin-bottom: 10px; color: var(--accent-500);">Dados Pessoais</h4>
+                <div class="form-row">
+                    <input type="text" id="txtNome" placeholder="Nome Completo" class="form-input" required>
+                    <input type="text" id="txtCpf" placeholder="CPF" class="form-input" required>
+                </div>
+                <div class="form-row">
+                    <input type="email" id="txtEmail" placeholder="E-mail" class="form-input">
+                    <input type="text" id="txtTelefone" placeholder="Telefone/WhatsApp" class="form-input" required>
+                </div>
+
+                <h4 style="margin-top: 20px; margin-bottom: 10px; color: var(--accent-500);">Dados Profissionais</h4>
+                <div class="form-row">
+                    <input type="text" id="txtMatricula" placeholder="Matrícula" class="form-input" required>
+                    <select id="selSituacao" class="form-select" required>
+                        <option value="Ativo">Ativo</option>
+                        <option value="Inativo">Inativo</option>
+                        <option value="Ferias">Férias</option>
+                        <option value="Desligado">Desligado</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <input type="text" id="txtCargo" placeholder="Cargo (Ex: Fiscal, Líder, ASP)" class="form-input" required>
+                    <input type="text" id="txtEmpresa" placeholder="Empresa/Contrato" class="form-input" required>
+                </div>
+                <div class="form-row">
+                    <input type="text" id="txtSetor" placeholder="Setor / Posto" class="form-input" required>
+                    <input type="date" id="txtDataAdmissao" class="form-input" title="Data de Admissão">
+                </div>
+
+                <div style="margin-top: 25px; display: flex; gap: 10px; justify-content: flex-end;">
+                    <button type="button" class="btn btn-secondary" id="btnCancelarModalColab">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" id="btnSalvarColaborador">Salvar Registro</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

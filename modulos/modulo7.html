@@ -1,0 +1,80 @@
+<header class="app-header">
+    <div class="header-left">
+        <h2 class="page-title">Logs e Auditoria</h2>
+    </div>
+</header>
+
+<div class="content-area">
+    <!-- Indicadores -->
+    <div class="dashboard-grid mb-4">
+        <div class="stat-card"><div class="stat-card__content"><span class="stat-card__label">Total de Eventos</span><span class="stat-card__value" id="audit-total">0</span></div></div>
+        <div class="stat-card"><div class="stat-card__content"><span class="stat-card__label" style="color: var(--danger-600);">Alertas / Falhas</span><span class="stat-card__value" id="audit-falhas">0</span></div></div>
+        <div class="stat-card"><div class="stat-card__content"><span class="stat-card__label" style="color: var(--warning-600);">Ações Críticas (Exclusões)</span><span class="stat-card__value" id="audit-criticas">0</span></div></div>
+    </div>
+
+    <!-- Tabela e Filtros -->
+    <div class="panel">
+        <div class="panel__header panel__toolbar" style="flex-direction: row; flex-wrap: wrap; gap: 1rem;">
+            <div class="search-box" style="flex: 1; min-width: 200px;">
+                <input type="text" id="busca-audit" class="search-box__input" placeholder="Buscar usuário ou tabela afetada...">
+            </div>
+            <select id="filtro-acao-audit" class="form-select" style="width: auto;">
+                <option value="">Todas as Ações</option>
+                <option value="INSERT">Criação (INSERT)</option>
+                <option value="UPDATE">Edição (UPDATE)</option>
+                <option value="DELETE">Exclusão (DELETE)</option>
+                <option value="LOGIN">Login do Sistema</option>
+            </select>
+            <input type="date" id="filtro-data-audit" class="form-input" style="width: auto;" title="Filtrar por data">
+            <button id="btn-exportar-audit" class="btn btn-secondary">📥 Exportar CSV</button>
+        </div>
+        
+        <div class="table-wrapper">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Data e Hora</th>
+                        <th>Usuário (E-mail)</th>
+                        <th>Ação</th>
+                        <th>Tabela Afetada</th>
+                        <th>Detalhes</th>
+                    </tr>
+                </thead>
+                <tbody id="tabela-auditoria">
+                    <tr><td colspan="5" class="text-center">Carregando auditoria...</td></tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <div id="paginacao-audit" class="pagination">
+            <span class="pagination__info" id="info-pag-audit">Carregando...</span>
+            <div class="pagination__nav">
+                <button id="btn-ant-audit" class="pagination__btn">Anterior</button>
+                <button id="btn-prox-audit" class="pagination__btn">Próxima</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Detalhes da Alteração -->
+<div id="modal-audit" class="modal-overlay">
+    <div class="modal" style="max-width: 800px;">
+        <div class="modal__header">
+            <h3 class="modal__title">Detalhes do Registro</h3>
+            <button class="modal-close btn-icon" id="fechar-modal-audit">X</button>
+        </div>
+        <div class="modal__body">
+            <p style="color: var(--primary-300); font-size: 0.875rem; margin-bottom: 1rem;" id="audit-info-extra"></p>
+            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                <div style="flex: 1; min-width: 300px;">
+                    <h4 style="color: var(--danger-600); margin-bottom: 0.5rem; font-size: 0.875rem;">🔴 Dados Anteriores</h4>
+                    <pre id="audit-dados-ant" style="background: var(--primary-900); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--primary-700); color: var(--primary-400); font-size: 0.75rem; overflow-x: auto; white-space: pre-wrap; min-height: 100px;"></pre>
+                </div>
+                <div style="flex: 1; min-width: 300px;">
+                    <h4 style="color: var(--success-600); margin-bottom: 0.5rem; font-size: 0.875rem;">🟢 Dados Novos</h4>
+                    <pre id="audit-dados-nov" style="background: var(--primary-900); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--primary-700); color: var(--white); font-size: 0.75rem; overflow-x: auto; white-space: pre-wrap; min-height: 100px;"></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

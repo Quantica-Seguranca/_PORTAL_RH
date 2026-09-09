@@ -1,0 +1,73 @@
+<header class="app-header">
+    <div class="header-left">
+        <h2 class="page-title">Relatórios Operacionais</h2>
+    </div>
+</header>
+
+<div class="content-area">
+    <!-- Abas de Seleção de Relatório -->
+    <div class="panel mb-4">
+        <div class="panel__header" style="flex-direction: row; gap: 1rem; border-bottom: 1px solid var(--primary-700); overflow-x: auto;">
+            <button class="btn btn-primary tab-report-btn" data-report="colaboradores">Efetivo e Status</button>
+            <button class="btn btn-secondary tab-report-btn" data-report="documentos">Documentos por Período</button>
+            <button class="btn btn-secondary tab-report-btn" data-report="falhas_proc">Falhas Operacionais</button>
+            <button class="btn btn-secondary tab-report-btn" data-report="falhas_email">Status de E-mails</button>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="panel mb-4">
+        <div class="panel__header panel__toolbar" style="flex-direction: row; flex-wrap: wrap; gap: 1rem; align-items: flex-end;">
+            <div>
+                <label style="color: var(--primary-400); font-size: 0.75rem; display: block; margin-bottom: 0.25rem;">Data Inicial</label>
+                <input type="date" id="filtro-data-inicio" class="form-input" style="width: auto;">
+            </div>
+            <div>
+                <label style="color: var(--primary-400); font-size: 0.75rem; display: block; margin-bottom: 0.25rem;">Data Final</label>
+                <input type="date" id="filtro-data-fim" class="form-input" style="width: auto;">
+            </div>
+            <div>
+                <label style="color: var(--primary-400); font-size: 0.75rem; display: block; margin-bottom: 0.25rem;">Filtro Específico (Status/Tipo)</label>
+                <select id="filtro-status-relatorio" class="form-select" style="width: auto; min-width: 150px;">
+                    <option value="">Todos</option>
+                    <option value="Ativo">Ativo / Sucesso</option>
+                    <option value="Inativo">Inativo / Falha</option>
+                    <option value="Pendente">Pendente</option>
+                </select>
+            </div>
+            <div style="flex: 1; display: flex; justify-content: flex-end; gap: 0.5rem;">
+                <button id="btn-gerar-relatorio" class="btn btn-primary">Gerar Relatório</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabela de Resultados e Ações -->
+    <div class="panel">
+        <div class="panel__header" style="flex-direction: row; justify-content: space-between; align-items: center;">
+            <h3 style="color: var(--white); font-size: 1rem;" id="titulo-relatorio-ativo">Colaboradores por Status</h3>
+            <div style="display: flex; gap: 0.5rem;">
+                <button id="btn-exportar-csv" class="btn btn-secondary">📥 Exportar CSV</button>
+                <button id="btn-imprimir" class="btn btn-secondary" style="color: var(--accent-500); border-color: var(--accent-500);">🖨️ Imprimir / PDF</button>
+            </div>
+        </div>
+        
+        <div class="table-wrapper">
+            <table class="data-table" id="tabela-relatorios">
+                <thead id="report-thead">
+                    <!-- Gerado via JS -->
+                </thead>
+                <tbody id="report-tbody">
+                    <tr><td class="text-center">Selecione os filtros e clique em "Gerar Relatório".</td></tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <div id="paginacao-report" class="pagination">
+            <span class="pagination__info" id="info-pag-report">Aguardando geração...</span>
+            <div class="pagination__nav">
+                <button id="btn-ant-report" class="pagination__btn" disabled>Anterior</button>
+                <button id="btn-prox-report" class="pagination__btn" disabled>Próxima</button>
+            </div>
+        </div>
+    </div>
+</div>

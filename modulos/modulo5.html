@@ -1,0 +1,66 @@
+<header class="app-header">
+    <div class="header-left">
+        <h2 class="page-title">Upload em Massa de Holerites</h2>
+    </div>
+</header>
+
+<div class="content-area">
+    <!-- Indicadores de Progresso -->
+    <div class="dashboard-grid mb-4">
+        <div class="stat-card"><div class="stat-card__content"><span class="stat-card__label">Total na Fila</span><span class="stat-card__value" id="upload-total">0</span></div></div>
+        <div class="stat-card"><div class="stat-card__content"><span class="stat-card__label" style="color: var(--success-600);">Sucessos</span><span class="stat-card__value" id="upload-sucesso">0</span></div></div>
+        <div class="stat-card"><div class="stat-card__content"><span class="stat-card__label" style="color: var(--danger-600);">Falhas / Pendências</span><span class="stat-card__value" id="upload-falha">0</span></div></div>
+        <div class="stat-card"><div class="stat-card__content"><span class="stat-card__label" style="color: var(--accent-500);">Progresso</span><span class="stat-card__value" id="upload-progresso">0%</span></div></div>
+    </div>
+
+    <!-- Zona Drag & Drop -->
+    <div class="panel mb-4" id="drop-zone-massa" style="padding: 3rem; text-align: center; border: 2px dashed var(--primary-600); cursor: pointer; transition: all 0.3s ease;">
+        <h3 style="color: var(--white); margin-bottom: 0.5rem; font-size: 1.25rem;">📥 Arraste dezenas de PDFs aqui</h3>
+        <p style="color: var(--primary-400); font-size: 0.875rem;">O sistema lerá a matrícula no nome do arquivo (Ex: 12345_08_2026.pdf) e vinculará ao ASP automaticamente.</p>
+        <input type="file" id="file-upload-massa" accept=".pdf" multiple style="display: none;">
+        
+        <div style="margin-top: 1.5rem; display: flex; gap: 1rem; justify-content: center;">
+            <button class="btn btn-secondary" id="btn-selecionar-arquivos">1. Selecionar Arquivos</button>
+            <button class="btn btn-primary" id="btn-processar-lote" disabled>2. Processar Lote</button>
+        </div>
+    </div>
+
+    <!-- Tabelas de Resultados -->
+    <div class="panel">
+        <div class="panel__header" style="flex-direction: row; gap: 1rem; border-bottom: 1px solid var(--primary-700);">
+            <button class="btn btn-primary tab-upload-btn" data-target="aba-fila">Fila de Processamento</button>
+            <button class="btn btn-secondary tab-upload-btn" data-target="aba-sucessos">Processados com Sucesso</button>
+            <button class="btn btn-secondary tab-upload-btn" data-target="aba-falhas">Falhas (Sem Matrícula)</button>
+        </div>
+
+        <!-- Aba 1: Fila -->
+        <div id="aba-fila" class="tab-upload-content" style="padding: 1rem;">
+            <div class="table-wrapper">
+                <table class="data-table">
+                    <thead><tr><th>Arquivo</th><th>Matrícula Identificada</th><th>Tamanho</th><th>Status</th></tr></thead>
+                    <tbody id="tabela-fila-massa"><tr><td colspan="4" class="text-center">Nenhum arquivo na fila.</td></tr></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Aba 2: Sucessos -->
+        <div id="aba-sucessos" class="tab-upload-content" style="display: none; padding: 1rem;">
+            <div class="table-wrapper">
+                <table class="data-table">
+                    <thead><tr><th>Arquivo</th><th>Matrícula</th><th>Colaborador (ASP)</th><th>Status</th></tr></thead>
+                    <tbody id="tabela-sucessos-massa"><tr><td colspan="4" class="text-center">Nenhum sucesso registrado ainda.</td></tr></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Aba 3: Falhas -->
+        <div id="aba-falhas" class="tab-upload-content" style="display: none; padding: 1rem;">
+            <div class="table-wrapper">
+                <table class="data-table">
+                    <thead><tr><th>Arquivo</th><th>Matrícula Buscada</th><th>Erro Reportado</th></tr></thead>
+                    <tbody id="tabela-falhas-massa"><tr><td colspan="3" class="text-center">Nenhuma falha de processamento.</td></tr></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

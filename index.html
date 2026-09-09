@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quântica Segurança - Portal RH</title>
+    <link rel="stylesheet" href="css/style.css">
+    
+    <!-- Scripts base -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase.js" defer></script>
+    <script src="js/auth.js" defer></script>
+    <script src="js/app.js" defer></script>
+</head>
+<body class="app-layout">
+
+    <!-- Tela de Login (Modal Inicial) -->
+    <div id="login-screen" class="modal-overlay" style="display: flex;">
+        <div class="modal" style="max-width: 400px; padding: 2rem;">
+            <div class="modal__header" style="border: none; padding-bottom: 0;">
+                <h2 class="modal__title">Quântica RH - Acesso</h2>
+            </div>
+            <div class="modal__body" style="padding-top: 1rem;">
+                <form id="login-form">
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-size: 0.875rem; color: var(--primary-300);">E-mail</label>
+                        <input type="email" id="login-email" class="form-input" required placeholder="seu.email@quantica.com">
+                    </div>
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-size: 0.875rem; color: var(--primary-300);">Senha</label>
+                        <input type="password" id="login-senha" class="form-input" required placeholder="••••••••">
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; font-size: 0.875rem;">
+                        <a href="#" id="btn-esqueci-senha" style="color: var(--accent-500); text-decoration: none;">Esqueci minha senha</a>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">Entrar no Sistema</button>
+                    <div style="margin-top: 1rem; text-align: center; font-size: 0.875rem;">
+                        <button type="button" id="btn-abrir-pre-cadastro" style="background: none; border: none; color: var(--accent-500); cursor: pointer; text-decoration: underline;">Solicitar Pré-Cadastro</button>
+                    </div>
+                    <div id="login-mensagem" style="margin-top: 1rem; text-align: center; font-size: 0.875rem; color: var(--danger-600);"></div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Pré-Cadastro -->
+    <div id="modal-pre-cadastro" class="modal-overlay" style="display: none;">
+        <div class="modal" style="max-width: 400px; padding: 2rem;">
+            <div class="modal__header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--primary-700); padding-bottom: 0.5rem; margin-bottom: 1rem;">
+                <h2 class="modal__title" style="font-size: 1.25rem; color: white;">Solicitar Acesso</h2>
+                <button type="button" id="fechar-pre-cadastro" style="background:none; border:none; color:#fff; font-size: 1.5rem; cursor:pointer;">&times;</button>
+            </div>
+            <div class="modal__body" style="padding-top: 0.5rem;">
+                <form id="form-pre-cadastro">
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-size: 0.875rem; color: var(--primary-300);">Nome Completo</label>
+                        <input type="text" id="pre-nome" class="form-input" required placeholder="Seu nome completo">
+                    </div>
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-size: 0.875rem; color: var(--primary-300);">E-mail</label>
+                        <input type="email" id="pre-email" class="form-input" required placeholder="seu.email@quantica.com">
+                    </div>
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-size: 0.875rem; color: var(--primary-300);">CPF</label>
+                        <input type="text" id="pre-cpf" class="form-input" required placeholder="000.000.000-00">
+                    </div>
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-size: 0.875rem; color: var(--primary-300);">Senha de Acesso</label>
+                        <input type="password" id="pre-senha" class="form-input" required placeholder="••••••••">
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">Enviar Solicitação</button>
+                    <div id="pre-mensagem" style="margin-top: 1rem; text-align: center; font-size: 0.875rem;"></div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Menu Lateral Fixo -->
+    <aside class="sidebar is-expanded">
+        <div class="sidebar__header" style="display: flex; align-items: center; gap: 0.75rem; padding: 1.25rem 1rem; border-bottom: 1px solid var(--primary-700);">
+            <img src="./img/logo.png" alt="Logo Quântica" style="max-height: 32px; width: auto; object-fit: contain;" onerror="this.style.display='none'">
+            <span class="sidebar__brand-text" style="font-size: 1rem; font-weight: bold; color: white;">Quântica RH</span>
+        </div>
+        <nav class="sidebar__nav">
+            <ul class="sidebar__menu">
+                <li id="menu-admin"><button class="sidebar__link w-full text-left" onclick="carregarModulo('modulo1')">1. Administração</button></li>
+                <li id="menu-colaboradores"><button class="sidebar__link w-full text-left" onclick="carregarModulo('modulo2')">2. Colaboradores</button></li>
+                <li id="menu-portal"><button class="sidebar__link w-full text-left" onclick="carregarModulo('modulo3')">3. Portal do Colaborador</button></li>
+                <li id="menu-holerites"><button class="sidebar__link w-full text-left" onclick="carregarModulo('modulo4')">4. Gestão de Holerites</button></li>
+                <!-- Botão de Sair -->
+                <li style="margin-top: 2rem;"><button id="btn-logout" class="sidebar__link w-full text-left" style="color: var(--danger-600);">Sair do Sistema</button></li>
+            </ul>
+        </nav>
+    </aside>
+
+    <!-- Onde os módulos serão injetados -->
+    <main id="conteudo-principal" class="main-content content-area">
+        <div class="panel p-6 text-center">
+            <h2 class="text-white text-2xl font-bold">Bem-vindo ao Quântica Segurança - Portal RH</h2>
+            <p class="text-slate-400 mt-2">Selecione um módulo no menu lateral para iniciar a operação.</p>
+        </div>
+    </main>
+
+</body>
+</html>
