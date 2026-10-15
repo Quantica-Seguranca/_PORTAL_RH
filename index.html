@@ -75,6 +75,29 @@
         </div>
     </div>
     
+    <!-- MODAL DE REDEFINIÇÃO DE SENHA AQUI  -->
+    <div id="modal-redefinir-senha" class="modal-overlay" style="display: none;">
+        <div class="modal" style="max-width: 400px; padding: 2rem;">
+            <div class="modal__header" style="border: none; padding-bottom: 0; margin-bottom: 1rem;">
+                <h2 class="modal__title" style="font-size: 1.25rem; color: white;">Redefinir Senha</h2>
+            </div>
+            <div class="modal__body" style="padding-top: 0.5rem;">
+                <form id="form-redefinir-senha">
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-size: 0.875rem; color: var(--primary-300);">Nova Senha</label>
+                        <input type="password" id="nova-senha" class="form-input" required placeholder="••••••••">
+                    </div>
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-size: 0.875rem; color: var(--primary-300);">Confirmar Nova Senha</label>
+                        <input type="password" id="confirma-senha" class="form-input" required placeholder="••••••••">
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">Atualizar Senha</button>
+                    <div id="redefinir-mensagem" style="margin-top: 1rem; text-align: center; font-size: 0.875rem;"></div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
     <!-- Menu Lateral Fixo -->
     <aside class="sidebar is-expanded">
         <div class="sidebar__header" style="display: flex; align-items: center; gap: 0.75rem; padding: 1.25rem 1rem; border-bottom: 1px solid var(--primary-700);">
