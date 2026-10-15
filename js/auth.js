@@ -12,12 +12,26 @@ document.addEventListener('DOMContentLoaded', async () => {
     const formPre = document.getElementById('form-pre-cadastro');
     const preMensagem = document.getElementById('pre-mensagem');
 
-    // Verifica se já existe uma sessão ativa e controla a exibição da tela de login
-    const { data: { session } } = await window.supabaseClient.auth.getSession();
-    if (session) {
+    // Elementos da Redefinição de Senha
+    const modalRedefinir = document.getElementById('modal-redefinir-senha');
+    const formRedefinir = document.getElementById('form-redefinir-senha');
+    const redefinirMensagem = document.getElementById('redefinir-mensagem');
+
+    // Verifica se a URL contém o pedido de recuperação de senha do Supabase
+    const isRecovery = window.location.hash && window.location.hash.includes('type=recovery');
+
+    if (isRecovery) {
+        // Se for recuperação, esconde o login e força a exibição do modal de nova senha
         if (loginScreen) loginScreen.style.display = 'none';
+        if (modalRedefinir) modalRedefinir.style.display = 'flex';
     } else {
-        if (loginScreen) loginScreen.style.display = 'flex';
+        // Verificação normal de sessão ativa se não for recuperação
+        const { data: { session } } = await window.supabaseClient.auth.getSession();
+        if (session) {
+            if (loginScreen) loginScreen.style.display = 'none';
+        } else {
+            if (loginScreen) loginScreen.style.display = 'flex';
+        }
     }
 
     // Processo de Login
@@ -131,16 +145,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // --- CONTROLE DA REDEFINIÇÃO DE SENHA (FICAM AQUI DENTRO) ---
-    const modalRedefinir = document.getElementById('modal-redefinir-senha');
-    const formRedefinir = document.getElementById('form-redefinir-senha');
-    const redefinirMensagem = document.getElementById('redefinir-mensagem');
-
-    if (window.location.hash && window.location.hash.includes('type=recovery')) {
-        if (loginScreen) loginScreen.style.display = 'none';
-        if (modalRedefinir) modalRedefinir.style.display = 'flex';
-    }
-
+    // Envio do Formulário de Redefinição de Senha
     if (formRedefinir) {
         formRedefinir.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -173,4 +178,4 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-}); 
+});
