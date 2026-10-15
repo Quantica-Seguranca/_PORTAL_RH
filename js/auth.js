@@ -130,4 +130,47 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         });
     }
-});
+
+    // --- CONTROLE DA REDEFINIÇÃO DE SENHA (FICAM AQUI DENTRO) ---
+    const modalRedefinir = document.getElementById('modal-redefinir-senha');
+    const formRedefinir = document.getElementById('form-redefinir-senha');
+    const redefinirMensagem = document.getElementById('redefinir-mensagem');
+
+    if (window.location.hash && window.location.hash.includes('type=recovery')) {
+        if (loginScreen) loginScreen.style.display = 'none';
+        if (modalRedefinir) modalRedefinir.style.display = 'flex';
+    }
+
+    if (formRedefinir) {
+        formRedefinir.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const novaSenha = document.getElementById('nova-senha').value;
+            const confirmaSenha = document.getElementById('confirma-senha').value;
+
+            if (novaSenha !== confirmaSenha) {
+                redefinirMensagem.textContent = 'As senhas não coincidem.';
+                redefinirMensagem.style.color = 'var(--danger-600)';
+                return;
+            }
+
+            redefinirMensagem.textContent = 'Atualizando senha...';
+            redefinirMensagem.style.color = 'var(--primary-300)';
+
+            const { data, error } = await window.supabaseClient.auth.updateUser({
+                password: novaSenha
+            });
+
+            if (error) {
+                redefinirMensagem.textContent = 'Erro ao atualizar: ' + error.message;
+                redefinirMensagem.style.color = 'var(--danger-600)';
+            } else {
+                redefinirMensagem.textContent = 'Senha atualizada com sucesso! Redirecionando...';
+                redefinirMensagem.style.color = 'var(--success-600)';
+                setTimeout(() => {
+                    window.location.href = window.location.pathname;
+                }, 2000);
+            }
+        });
+    }
+
+}); 
