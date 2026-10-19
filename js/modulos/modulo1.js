@@ -1,4 +1,4 @@
-// O código completo do Módulo 1 limpo, sem o quadro informativo integrado
+
 
 if (typeof window.modulo1Initialized === 'undefined') {
     window.modulo1Initialized = true;
@@ -216,13 +216,31 @@ if (typeof window.modulo1Initialized === 'undefined') {
                 if (!confirm('Deseja realmente excluir este usuário da base?')) return;
                 const id = e.target.getAttribute('data-id');
 
+                const usuarioParaExcluir = stateModulo1.users.find(u => u.id === id);
+                const emailUsuario = usuarioParaExcluir ? usuarioParaExcluir.email : null;
+
                 const { error } = await window.supabaseClient
                     .from('colaboradores')
                     .delete()
                     .eq('id', id);
 
-                if (!error) loadModulo1Data();
-                else alert('Erro ao excluir registro.');
+                if (error) {
+                    alert('Erro ao excluir registro de colaboradores.');
+                    return;
+                }
+
+                if (emailUsuario) {
+                    const { error: errorPreCad } = await window.supabaseClient
+                        .from('pre_cadastros')
+                        .delete()
+                        .eq('email', emailUsuario);
+
+                    if (errorPreCad) {
+                        console.warn('Aviso: Não foi possível limpar o pré-cadastro correspondente.', errorPreCad.message);
+                    }
+                }
+
+                loadModulo1Data();
             });
         });
     }
