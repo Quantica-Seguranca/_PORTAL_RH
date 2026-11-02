@@ -472,12 +472,10 @@ if (typeof window.modulo1Initialized === 'undefined') {
             });
         }
 
-        // Executa o carregamento inicial completo dos dados do módulo
+       // Executa o carregamento inicial completo dos dados do módulo
         loadModulo1Data();
     }
 
-  // Garante que o DOM do módulo foi totalmente inserido antes de carregar os dados
-    setTimeout(() => {
-        initModulo1();
-    }, 100);
+    // Inicializa o módulo apenas uma vez ao carregar o script
+    initModulo1();
 }
