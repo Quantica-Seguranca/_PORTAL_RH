@@ -281,3 +281,68 @@ button {
 .eye-btn:focus {
   outline: none;
 }
+/* ============================================================
+   (VERSÃO MOBILE / CELULAR)
+   ============================================================ */
+@media (max-width: 768px) {
+  /* Muda a estrutura de "lado a lado" para "empilhado" */
+  .app-layout {
+    flex-direction: column;
+  }
+
+  /* Transforma a barra lateral fixa num cabeçalho fluido no topo */
+  .sidebar {
+    position: relative;
+    width: 100%;
+    height: auto;
+    border-right: none;
+    border-bottom: 2px solid var(--primary-700);
+  }
+
+  .sidebar__nav {
+    padding: 0.75rem;
+    overflow-y: visible;
+  }
+
+  /* Coloca os botões do menu em formato de grade (2 por linha) */
+  .sidebar__menu {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .sidebar__menu li {
+    flex: 1 1 48%; /* Cada botão ocupa metade da tela */
+    margin-top: 0 !important; /* Corrige a margem do botão de sair */
+  }
+
+  .sidebar__link {
+    justify-content: center;
+    text-align: center;
+    padding: 0.6rem 0.5rem;
+    font-size: 0.8rem;
+  }
+
+  /* Liberta o conteúdo principal para ocupar toda a largura do celular */
+  .main-content {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  /* Reduz os espaçamentos internos para aproveitar melhor a tela pequena */
+  .content-area {
+    padding: 1rem;
+  }
+
+  /* Garante que os Modais (pop-ups de login/cadastro) caibam no celular */
+  .modal {
+    margin: 1rem;
+    width: calc(100% - 2rem);
+    max-height: 90vh;
+  }
+
+  /* Transforma formulários que tenham 2 colunas para apenas 1 coluna */
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+}
