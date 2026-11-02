@@ -1,5 +1,3 @@
-
-
 if (typeof window.modulo1Initialized === 'undefined') {
     window.modulo1Initialized = true;
 
@@ -23,129 +21,142 @@ if (typeof window.modulo1Initialized === 'undefined') {
     }
 
     async function loadStatistics() {
-        const { data, error } = await window.supabaseClient.from('colaboradores').select('*');
-        if (error) { console.error('Erro nas estatísticas:', error); return; }
+        try {
+            const { data, error } = await window.supabaseClient.from('colaboradores').select('*');
+            if (error) { console.error('Erro nas estatísticas:', error); return; }
 
-        const ativos = data.filter(u => (u.status || 'Ativo').toLowerCase() === 'ativo').length;
-        const operadores = data.filter(u => u.perfil === 'operacional').length;
-        const admins = data.filter(u => ['admin', 'gerente', 'master'].includes(u.perfil)).length;
+            const lista = data || [];
+            const ativos = lista.filter(u => (u.status || 'Ativo').toLowerCase() === 'ativo').length;
+            const operadores = lista.filter(u => u.perfil === 'operacional').length;
+            const admins = lista.filter(u => ['admin', 'gerente', 'master'].includes(u.perfil)).length;
 
-        if(getEl('stat-total')) getEl('stat-total').textContent = data.length;
-        if(getEl('stat-active')) getEl('stat-active').textContent = ativos;
-        if(getEl('stat-operators')) getEl('stat-operators').textContent = operadores;
-        if(getEl('stat-admins')) getEl('stat-admins').textContent = admins;
+            if(getEl('stat-total')) getEl('stat-total').textContent = lista.length;
+            if(getEl('stat-active')) getEl('stat-active').textContent = ativos;
+            if(getEl('stat-operators')) getEl('stat-operators').textContent = operadores;
+            if(getEl('stat-admins')) getEl('stat-admins').textContent = admins;
+        } catch (e) {
+            console.error('Exceção ao carregar estatísticas:', e);
+        }
     }
 
-   async function loadUsers() {
-    const { page, limit, search } = stateModulo1.pagination;
-    const start = (page - 1) * limit;
-    const end = start + limit - 1;
+    async function loadUsers() {
+        try {
+            const { page, limit, search } = stateModulo1.pagination;
+            const start = (page - 1) * limit;
+            const end = start + limit - 1;
 
-    let query = window.supabaseClient.from('colaboradores').select('*', { count: 'exact' }).order('nome_completo', { ascending: true }).range(start, end);
+            let query = window.supabaseClient
+                .from('colaboradores')
+                .select('*', { count: 'exact' })
+                .order('nome_completo', { ascending: true })
+                .range(start, end);
 
-    if (search) {
-        query = query.or(`nome_completo.ilike.%${search}%,email.ilike.%${search}%`);
-    }
-
-    const { data, error, count } = await query;
-    if (error) { console.error('Erro ao carregar usuários:', error); return; }
-
-    stateModulo1.users = data || [];
-    stateModulo1.pagination.total = count || 0;
-    
-    renderUsersTable();
-    renderPaginationControls(); // <- Adicionado para desenhar os botões de página
-}
-
-// Função para criar os botões de navegação dinamicamente
-function renderPaginationControls() {
-    const containerTabela = document.getElementById('users-table-body');
-    if (!containerTabela) return;
-
-    // Procura ou cria um container de paginação logo abaixo da tabela
-    let paginationContainer = document.getElementById('pagination-container');
-    if (!paginationContainer) {
-        paginationContainer = document.createElement('div');
-        paginationContainer.id = 'pagination-container';
-        paginationContainer.style.cssText = 'display: flex; justify-content: space-between; align-items: center; padding: 1rem; color: var(--primary-300); font-size: 0.875rem;';
-        
-        // Insere após o wrapper da tabela
-        const wrapper = containerTabela.closest('.table-wrapper') || containerTabela.parentElement;
-        wrapper.after(paginationContainer);
-    }
-
-    const { page, limit, total } = stateModulo1.pagination;
-    const totalPages = Math.ceil(total / limit) || 1;
-
-    paginationContainer.innerHTML = `
-        <span>Mostrando página <strong>${page}</strong> de <strong>${totalPages}</strong> (Total: ${total} registos)</span>
-        <div style="display: flex; gap: 0.5rem;">
-            <button id="btn-prev-page" class="btn btn-sm btn-secondary" ${page <= 1 ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''}>Anterior</button>
-            <button id="btn-next-page" class="btn btn-sm btn-secondary" ${page >= totalPages ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''}>Próxima</button>
-        </div>
-    `;
-
-    // Eventos dos botões
-    const btnPrev = document.getElementById('btn-prev-page');
-    const btnNext = document.getElementById('btn-next-page');
-
-    if (btnPrev) {
-        btnPrev.onclick = () => {
-            if (stateModulo1.pagination.page > 1) {
-                stateModulo1.pagination.page--;
-                loadUsers();
+            if (search) {
+                query = query.or(`nome_completo.ilike.%${search}%,email.ilike.%${search}%`);
             }
-        };
+
+            const { data, error, count } = await query;
+            if (error) { console.error('Erro ao carregar usuários:', error); return; }
+
+            stateModulo1.users = data || [];
+            stateModulo1.pagination.total = count || 0;
+            
+            renderUsersTable();
+            renderPaginationControls();
+        } catch (e) {
+            console.error('Exceção ao carregar usuários:', e);
+        }
     }
 
-    if (btnNext) {
-        btnNext.onclick = () => {
-            if (stateModulo1.pagination.page < totalPages) {
-                stateModulo1.pagination.page++;
-                loadUsers();
-            }
-        };
+    function renderPaginationControls() {
+        const containerTabela = document.getElementById('users-table-body');
+        if (!containerTabela) return;
+
+        let paginationContainer = document.getElementById('pagination-container');
+        if (!paginationContainer) {
+            paginationContainer = document.createElement('div');
+            paginationContainer.id = 'pagination-container';
+            paginationContainer.style.cssText = 'display: flex; justify-content: space-between; align-items: center; padding: 1rem; color: var(--primary-300, #ccc); font-size: 0.875rem;';
+            
+            const wrapper = containerTabela.closest('.table-wrapper') || containerTabela.parentElement;
+            if (wrapper) wrapper.after(paginationContainer);
+        }
+
+        const { page, limit, total } = stateModulo1.pagination;
+        const totalPages = Math.ceil(total / limit) || 1;
+
+        paginationContainer.innerHTML = `
+            <span>Mostrando página <strong>${page}</strong> de <strong>${totalPages}</strong> (Total: ${total} registos)</span>
+            <div style="display: flex; gap: 0.5rem;">
+                <button id="btn-prev-page" class="btn btn-sm btn-secondary" ${page <= 1 ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''}>Anterior</button>
+                <button id="btn-next-page" class="btn btn-sm btn-secondary" ${page >= totalPages ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''}>Próxima</button>
+            </div>
+        `;
+
+        const btnPrev = document.getElementById('btn-prev-page');
+        const btnNext = document.getElementById('btn-next-page');
+
+        if (btnPrev) {
+            btnPrev.onclick = () => {
+                if (stateModulo1.pagination.page > 1) {
+                    stateModulo1.pagination.page--;
+                    loadUsers();
+                }
+            };
+        }
+
+        if (btnNext) {
+            btnNext.onclick = () => {
+                if (stateModulo1.pagination.page < totalPages) {
+                    stateModulo1.pagination.page++;
+                    loadUsers();
+                }
+            };
+        }
     }
-}
 
     async function loadPreCadastros() {
-        const tbody = getEl('pre-cadastros-table-body');
-        if (!tbody) return;
+        try {
+            const tbody = getEl('pre-cadastros-table-body');
+            if (!tbody) return;
 
-        const { data, error } = await window.supabaseClient
-            .from('pre_cadastros')
-            .select('*')
-            .eq('status', 'pendente')
-            .order('criado_em', { ascending: false });
+            const { data, error } = await window.supabaseClient
+                .from('pre_cadastros')
+                .select('*')
+                .eq('status', 'pendente')
+                .order('criado_em', { ascending: false });
 
-        if (error) {
-            tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--danger-600);">Erro ao carregar solicitações.</td></tr>`;
-            return;
+            if (error) {
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--danger-600, red);">Erro ao carregar solicitações.</td></tr>`;
+                return;
+            }
+
+            if (!data || data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--primary-300, #aaa); padding: 1rem;">Nenhuma solicitação pendente.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = '';
+            data.forEach(pre => {
+                const tr = document.createElement('tr');
+                tr.style.borderBottom = '1px solid var(--primary-800, #333)';
+                tr.innerHTML = `
+                    <td style="padding: 0.75rem;">${pre.nome || '-'}</td>
+                    <td style="padding: 0.75rem;">${pre.email || '-'}</td>
+                    <td style="padding: 0.75rem;">${pre.cpf || '-'}</td>
+                    <td style="padding: 0.75rem;">${formatDate(pre.criado_em)}</td>
+                    <td style="padding: 0.75rem; text-align: center;">
+                        <button class="btn btn-sm btn-aprovar" data-id="${pre.id}" data-email="${pre.email}" data-nome="${pre.nome}" data-senha="${pre.senha_temporaria || '123456'}" style="margin-right: 0.5rem; background: var(--success-600, #28a745); color: white; border: none; padding: 0.25rem 0.5rem; border-radius: 4px; cursor: pointer;">Aprovar</button>
+                        <button class="btn btn-sm btn-rejeitar" data-id="${pre.id}" style="background: var(--danger-600, #dc3545); color: white; border: none; padding: 0.25rem 0.5rem; border-radius: 4px; cursor: pointer;">Rejeitar</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            atacharEventosPreCadastros();
+        } catch (e) {
+            console.error('Exceção ao carregar pré-cadastros:', e);
         }
-
-        if (!data || data.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--primary-300); padding: 1rem;">Nenhuma solicitação pendente.</td></tr>`;
-            return;
-        }
-
-        tbody.innerHTML = '';
-        data.forEach(pre => {
-            const tr = document.createElement('tr');
-            tr.style.borderBottom = '1px solid var(--primary-800)';
-            tr.innerHTML = `
-                <td style="padding: 0.75rem;">${pre.nome}</td>
-                <td style="padding: 0.75rem;">${pre.email}</td>
-                <td style="padding: 0.75rem;">${pre.cpf || '-'}</td>
-                <td style="padding: 0.75rem;">${formatDate(pre.criado_em)}</td>
-                <td style="padding: 0.75rem; text-align: center;">
-                    <button class="btn btn-sm btn-aprovar" data-id="${pre.id}" data-email="${pre.email}" data-nome="${pre.nome}" data-senha="${pre.senha_temporaria || '123456'}" style="margin-right: 0.5rem; background: var(--success-600); color: white; border: none; padding: 0.25rem 0.5rem; border-radius: 4px; cursor: pointer;">Aprovar</button>
-                    <button class="btn btn-sm btn-rejeitar" data-id="${pre.id}" style="background: var(--danger-600); color: white; border: none; padding: 0.25rem 0.5rem; border-radius: 4px; cursor: pointer;">Rejeitar</button>
-                </td>
-            `;
-            tbody.appendChild(tr);
-        });
-
-        atacharEventosPreCadastros();
     }
 
     function atacharEventosPreCadastros() {
@@ -219,14 +230,14 @@ function renderPaginationControls() {
         if (!tbody) return;
         tbody.innerHTML = '';
 
-        if (stateModulo1.users.length === 0) {
+        if (!stateModulo1.users || stateModulo1.users.length === 0) {
             tbody.innerHTML = '<tr><td colspan="6" class="text-center" style="text-align: center; padding: 1rem;">Nenhum usuário encontrado.</td></tr>';
             return;
         }
 
         stateModulo1.users.forEach((user) => {
             const tr = document.createElement('tr');
-            tr.style.borderBottom = '1px solid var(--primary-800)';
+            tr.style.borderBottom = '1px solid var(--primary-800, #333)';
             
             const statusAtual = user.status || 'Ativo';
             const perfilAtual = user.perfil || 'colaborador';
@@ -235,19 +246,19 @@ function renderPaginationControls() {
                 <td style="padding: 0.75rem;">${user.nome_completo || 'Não informado'}</td>
                 <td style="padding: 0.75rem;">${user.email || '-'}</td>
                 <td style="padding: 0.75rem;">
-                    <span class="badge" style="background: var(--primary-700); color: white; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem; text-transform: uppercase;">
+                    <span class="badge" style="background: var(--primary-700, #444); color: white; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem; text-transform: uppercase;">
                         ${perfilAtual}
                     </span>
                 </td>
                 <td style="padding: 0.75rem;">
-                    <span style="padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem; background: ${statusAtual.toLowerCase() === 'bloqueado' ? 'var(--danger-600)' : 'var(--success-600)'}; color: white;">
+                    <span style="padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem; background: ${statusAtual.toLowerCase() === 'bloqueado' ? 'var(--danger-600, #dc3545)' : 'var(--success-600, #28a745)'}; color: white;">
                         ${statusAtual}
                     </span>
                 </td>
                 <td style="padding: 0.75rem;">${formatDate(user.criado_em)}</td>
                 <td style="padding: 0.75rem; text-align: center;">
-                    <button class="btn btn-sm btn-gerir" data-id="${user.id}" style="background: var(--info-600); color: white; font-size: 0.75rem; padding: 0.3rem 0.75rem; border: none; border-radius: 4px; cursor: pointer;">Gerir Acesso</button>
-                    <button class="btn btn-sm btn-excluir" data-id="${user.id}" style="background-color: var(--danger-600); color: white; font-size: 0.75rem; padding: 0.3rem 0.75rem; border: none; border-radius: 4px; cursor: pointer; margin-left: 0.5rem;">Excluir</button>
+                    <button class="btn btn-sm btn-gerir" data-id="${user.id}" style="background: var(--info-600, #17a2b8); color: white; font-size: 0.75rem; padding: 0.3rem 0.75rem; border: none; border-radius: 4px; cursor: pointer;">Gerir Acesso</button>
+                    <button class="btn btn-sm btn-excluir" data-id="${user.id}" style="background-color: var(--danger-600, #dc3545); color: white; font-size: 0.75rem; padding: 0.3rem 0.75rem; border: none; border-radius: 4px; cursor: pointer; margin-left: 0.5rem;">Excluir</button>
                 </td>
             `;
             tbody.appendChild(tr);
@@ -283,14 +294,10 @@ function renderPaginationControls() {
                 }
 
                 if (emailUsuario) {
-                    const { error: errorPreCad } = await window.supabaseClient
+                    await window.supabaseClient
                         .from('pre_cadastros')
                         .delete()
                         .eq('email', emailUsuario);
-
-                    if (errorPreCad) {
-                        console.warn('Aviso: Não foi possível limpar o pré-cadastro correspondente.', errorPreCad.message);
-                    }
                 }
 
                 loadModulo1Data();
@@ -306,56 +313,54 @@ function renderPaginationControls() {
         
         let painel = getEl('painel-edicao-usuario');
         if (!painel) {
-            const container = document.querySelector('.content-area');
-            if (container) {
-                painel = document.createElement('div');
-                painel.id = 'painel-edicao-usuario';
-                painel.className = 'panel p-6';
-                painel.style.cssText = 'background: var(--primary-900); margin-bottom: 2rem; border: 1px solid var(--accent-500); display: block;';
-                painel.innerHTML = `
-                    <h3 id="titulo-editar-usuario" class="text-white text-lg font-bold" style="margin-bottom: 1rem; color: var(--accent-500);">A editar: -</h3>
-                    <form id="form-editar-privilegios">
-                        <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
-                            <div>
-                                <label style="display:block; font-size:0.8rem; color:var(--primary-400); margin-bottom:0.25rem;">E-mail da Conta (Leitura)</label>
-                                <input type="email" id="edit-email" class="form-input" readonly style="background: var(--primary-800); color: var(--primary-400); width: 100%; padding: 0.5rem; border: 1px solid var(--primary-700); border-radius: 4px;">
-                            </div>
-                            <div>
-                                <label style="display:block; font-size:0.8rem; color:var(--primary-400); margin-bottom:0.25rem;">Nome do Colaborador</label>
-                                <input type="text" id="edit-nome" class="form-input" style="width: 100%; padding: 0.5rem; background: var(--primary-700); color: white; border: 1px solid var(--primary-600); border-radius: 4px;">
-                            </div>
+            const container = document.querySelector('.content-area') || document.body;
+            painel = document.createElement('div');
+            painel.id = 'painel-edicao-usuario';
+            painel.className = 'panel p-6';
+            painel.style.cssText = 'background: var(--primary-900, #1a1a1a); margin-bottom: 2rem; border: 1px solid var(--accent-500, #f0a500); padding: 1.5rem; border-radius: 8px; display: block;';
+            painel.innerHTML = `
+                <h3 id="titulo-editar-usuario" class="text-white text-lg font-bold" style="margin-bottom: 1rem; color: var(--accent-500, #f0a500);">A editar: -</h3>
+                <form id="form-editar-privilegios">
+                    <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                        <div>
+                            <label style="display:block; font-size:0.8rem; color:var(--primary-400, #ccc); margin-bottom:0.25rem;">E-mail da Conta (Leitura)</label>
+                            <input type="email" id="edit-email" class="form-input" readonly style="background: var(--primary-800, #222); color: var(--primary-400, #aaa); width: 100%; padding: 0.5rem; border: 1px solid var(--primary-700, #444); border-radius: 4px;">
                         </div>
-                        <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
-                            <div>
-                                <label style="display:block; font-size:0.8rem; color:var(--primary-400); margin-bottom:0.25rem;">Cargo / Função</label>
-                                <input type="text" id="edit-cargo" class="form-input" style="width: 100%; padding: 0.5rem; background: var(--primary-700); color: white; border: 1px solid var(--primary-600); border-radius: 4px;">
-                            </div>
-                            <div>
-                                <label style="display:block; font-size:0.8rem; color:var(--primary-400); margin-bottom:0.25rem;">Nível Corporativo (Role)</label>
-                                <select id="edit-perfil" class="form-input" style="width: 100%; padding: 0.5rem; background: var(--primary-700); color: white; border: 1px solid var(--primary-600); border-radius: 4px;">
-                                    <option value="colaborador">Colaborador</option>
-                                    <option value="operacional">Operador / Fiscal</option>
-                                    <option value="admin">Administrador</option>
-                                    <option value="gerente">Gerência</option>
-                                    <option value="master">Master</option>
-                                </select>
-                            </div>
+                        <div>
+                            <label style="display:block; font-size:0.8rem; color:var(--primary-400, #ccc); margin-bottom:0.25rem;">Nome do Colaborador</label>
+                            <input type="text" id="edit-nome" class="form-input" style="width: 100%; padding: 0.5rem; background: var(--primary-700, #333); color: white; border: 1px solid var(--primary-600, #555); border-radius: 4px;">
                         </div>
-                        <div style="margin-bottom: 1rem;">
-                            <label style="display:block; font-size:0.8rem; color:var(--primary-400); margin-bottom:0.25rem;">Status da Conta</label>
-                            <select id="edit-status" class="form-input" style="width: 100%; padding: 0.5rem; background: var(--primary-700); color: white; border: 1px solid var(--primary-600); border-radius: 4px;">
-                                <option value="Ativo">Ativo</option>
-                                <option value="Bloqueado">Bloqueado (Acesso Suspenso)</option>
+                    </div>
+                    <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                        <div>
+                            <label style="display:block; font-size:0.8rem; color:var(--primary-400, #ccc); margin-bottom:0.25rem;">Cargo / Função</label>
+                            <input type="text" id="edit-cargo" class="form-input" style="width: 100%; padding: 0.5rem; background: var(--primary-700, #333); color: white; border: 1px solid var(--primary-600, #555); border-radius: 4px;">
+                        </div>
+                        <div>
+                            <label style="display:block; font-size:0.8rem; color:var(--primary-400, #ccc); margin-bottom:0.25rem;">Nível Corporativo (Role)</label>
+                            <select id="edit-perfil" class="form-input" style="width: 100%; padding: 0.5rem; background: var(--primary-700, #333); color: white; border: 1px solid var(--primary-600, #555); border-radius: 4px;">
+                                <option value="colaborador">Colaborador</option>
+                                <option value="operacional">Operador / Fiscal</option>
+                                <option value="admin">Administrador</option>
+                                <option value="gerente">Gerência</option>
+                                <option value="master">Master</option>
                             </select>
                         </div>
-                        <div style="display: flex; gap: 1rem; margin-top: 1rem;">
-                            <button type="submit" class="btn btn-primary" style="flex: 2; background: var(--success-600); color: white; padding: 0.5rem; border: none; border-radius: 4px; cursor: pointer;">Salvar Alterações</button>
-                            <button type="button" id="btn-cancelar-edicao" class="btn btn-secondary" style="flex: 1; background: var(--primary-700); color: white; padding: 0.5rem; border: none; border-radius: 4px; cursor: pointer;">Cancelar Edição</button>
-                        </div>
-                    </form>
-                `;
-                container.prepend(painel);
-            }
+                    </div>
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display:block; font-size:0.8rem; color:var(--primary-400, #ccc); margin-bottom:0.25rem;">Status da Conta</label>
+                        <select id="edit-status" class="form-input" style="width: 100%; padding: 0.5rem; background: var(--primary-700, #333); color: white; border: 1px solid var(--primary-600, #555); border-radius: 4px;">
+                            <option value="Ativo">Ativo</option>
+                            <option value="Bloqueado">Bloqueado (Acesso Suspenso)</option>
+                        </select>
+                    </div>
+                    <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                        <button type="submit" class="btn btn-primary" style="flex: 2; background: var(--success-600, #28a745); color: white; padding: 0.5rem; border: none; border-radius: 4px; cursor: pointer;">Salvar Alterações</button>
+                        <button type="button" id="btn-cancelar-edicao" class="btn btn-secondary" style="flex: 1; background: var(--primary-700, #444); color: white; padding: 0.5rem; border: none; border-radius: 4px; cursor: pointer;">Cancelar Edição</button>
+                    </div>
+                </form>
+            `;
+            container.prepend(painel);
         } else {
             painel.style.display = 'block';
         }
@@ -462,14 +467,13 @@ function renderPaginationControls() {
         if(searchInput) {
             searchInput.addEventListener('input', (e) => {
                 stateModulo1.pagination.search = e.target.value.trim();
+                stateModulo1.pagination.page = 1; // Reseta para a primeira página ao pesquisar
                 loadUsers();
             });
         }
 
-      // Dispara o carregamento em segundo plano sem bloquear a abertura da tela
-        loadStatistics();
-        loadUsers();
-        loadPreCadastros();
+        // Executa o carregamento inicial completo dos dados do módulo
+        loadModulo1Data();
     }
 
     initModulo1();
