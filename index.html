@@ -26,10 +26,18 @@
                         <label style="display: block; margin-bottom: 0.5rem; font-size: 0.875rem; color: var(--primary-300);">E-mail</label>
                         <input type="email" id="login-email" class="form-input" required placeholder="seu.email@quantica.com">
                     </div>
-                    <div style="margin-bottom: 1rem;">
-                        <label style="display: block; margin-bottom: 0.5rem; font-size: 0.875rem; color: var(--primary-300);">Senha</label>
-                        <input type="password" id="login-senha" class="form-input" required placeholder="••••••••">
-                    </div>
+                   <div style="margin-bottom: 1rem;">
+    <label style="display: block; margin-bottom: 0.5rem; font-size: 0.875rem; color: var(--primary-300);">Senha</label>
+    <div class="password-wrapper">
+        <input type="password" id="login-senha" class="form-input" required placeholder="••••••••">
+        <button type="button" class="eye-btn" onclick="togglePasswordVisibility('login-senha', 'eyeIconLogin')" aria-label="Mostrar senha">
+            <svg id="eyeIconLogin" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+        </button>
+    </div>
+</div>
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; font-size: 0.875rem;">
                         <a href="#" id="btn-esqueci-senha" style="color: var(--accent-500); text-decoration: none;">Esqueci minha senha</a>
                     </div>
