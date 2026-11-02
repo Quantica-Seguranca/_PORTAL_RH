@@ -126,10 +126,10 @@ if (typeof window.modulo1Initialized === 'undefined') {
             const tbody = getEl('pre-cadastros-table-body');
             if (!tbody) return;
 
+            // Busca todos os registos sem filtro rígido de status para garantir exibição imediata
             const { data, error } = await window.supabaseClient
                 .from('pre_cadastros')
                 .select('*')
-                .eq('status', 'pendente')
                 .order('criado_em', { ascending: false });
 
             if (error) {
@@ -138,7 +138,7 @@ if (typeof window.modulo1Initialized === 'undefined') {
             }
 
             if (!data || data.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--primary-300, #aaa); padding: 1rem;">Nenhuma solicitação pendente.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--primary-300, #aaa); padding: 1rem;">Nenhuma solicitação encontrada.</td></tr>`;
                 return;
             }
 
