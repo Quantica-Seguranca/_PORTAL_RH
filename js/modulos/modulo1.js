@@ -413,7 +413,10 @@ if (typeof window.modulo1Initialized === 'undefined') {
             });
         }
 
-        loadModulo1Data();
+      // Dispara o carregamento em segundo plano sem bloquear a abertura da tela
+        loadStatistics();
+        loadUsers();
+        loadPreCadastros();
     }
 
     initModulo1();
