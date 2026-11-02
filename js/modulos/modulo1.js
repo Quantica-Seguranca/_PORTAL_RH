@@ -471,12 +471,11 @@ if (typeof window.modulo1Initialized === 'undefined') {
                 loadUsers();
             });
         }
-
-       // Garante que o DOM está pronto e injetado antes de buscar os dados
-    setTimeout(() => {
-        loadModulo1Data();
-    }, 150);
+// Executa a inicialização dos eventos do módulo
+    initModulo1();
 }
 
-// Inicializa o módulo
-initModulo1();
+// Garante o carregamento dos dados após a injeção do HTML no DOM
+setTimeout(() => {
+    loadModulo1Data();
+}, 150);
