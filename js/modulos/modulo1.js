@@ -467,15 +467,15 @@ if (typeof window.modulo1Initialized === 'undefined') {
         if(searchInput) {
             searchInput.addEventListener('input', (e) => {
                 stateModulo1.pagination.search = e.target.value.trim();
-                stateModulo1.pagination.page = 1; // Reseta para a primeira página ao pesquisar
+                stateModulo1.pagination.page = 1;
                 loadUsers();
             });
         }
-// Executa a inicialização dos eventos do módulo
-    initModulo1();
-}
+    }
 
-// Garante o carregamento dos dados após a injeção do HTML no DOM
-setTimeout(() => {
-    loadModulo1Data();
-}, 150);
+    // Inicializa o módulo e executa o carregamento com atraso seguro para o DOM
+    initModulo1();
+    setTimeout(() => {
+        loadModulo1Data();
+    }, 150);
+}
