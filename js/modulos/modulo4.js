@@ -51,7 +51,6 @@ if (typeof window.modulo4Initialized === 'undefined') {
             return;
         }
 
-        // Agrupa os documentos por competência para gerar a visualização em "pastas"
         const agrupadosPorCompetencia = docs.reduce((acc, doc) => {
             const comp = doc.competencia || 'Geral / Outros';
             if (!acc[comp]) acc[comp] = [];
@@ -65,7 +64,7 @@ if (typeof window.modulo4Initialized === 'undefined') {
             const itensDaCompetencia = agrupadosPorCompetencia[competencia];
             
             const pastaDiv = document.createElement('div');
-            pastaDiv.style.cssText = 'background: var(--primary-900); border: 1px solid var(--primary-700); border-radius: var(--radius-md); overflow: hidden;';
+            pastaDiv.style.cssText = 'background: var(--primary-900); border: 1px solid var(--primary-700); border-radius: var(--radius-md); overflow: hidden; margin-bottom: 1rem;';
             
             pastaDiv.innerHTML = `
                 <div class="pasta-header" style="padding: 1rem 1.25rem; background: var(--primary-800); display: flex; justify-content: space-between; align-items: center; cursor: pointer;">
@@ -80,15 +79,15 @@ if (typeof window.modulo4Initialized === 'undefined') {
                 </div>
                 <div class="pasta-conteudo" style="display: none; padding: 1rem; border-top: 1px solid var(--primary-700);">
                     <div class="table-wrapper">
-                        <table class="data-table">
+                        <table class="data-table" style="width: 100%; border-collapse: collapse;">
                             <thead>
-                                <tr>
-                                    <th>Arquivo</th>
-                                    <th>Colaborador (ASP)</th>
-                                    <th>Matrícula</th>
-                                    <th>Data de Envio</th>
-                                    <th>Status</th>
-                                    <th style="text-align: center;">Ações</th>
+                                <tr style="text-align: left; color: var(--primary-300); font-size: 0.85rem;">
+                                    <th style="padding: 0.5rem;">Arquivo</th>
+                                    <th style="padding: 0.5rem;">Colaborador (ASP)</th>
+                                    <th style="padding: 0.5rem;">Matrícula</th>
+                                    <th style="padding: 0.5rem;">Data de Envio</th>
+                                    <th style="padding: 0.5rem;">Status</th>
+                                    <th style="padding: 0.5rem; text-align: center;">Ações</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -103,13 +102,13 @@ if (typeof window.modulo4Initialized === 'undefined') {
                                     const dataEnvio = new Date(doc.criado_em).toLocaleDateString('pt-BR');
                                     
                                     return `
-                                        <tr>
-                                            <td><strong>${doc.nome_arquivo}</strong></td>
-                                            <td>${nomeColab}</td>
-                                            <td>${doc.matricula_colaborador || '-'}</td>
-                                            <td>${dataEnvio}</td>
-                                            <td><span class="badge badge--active">Ativo</span></td>
-                                            <td style="text-align: center;">
+                                        <tr style="border-bottom: 1px solid var(--primary-800);">
+                                            <td style="padding: 0.75rem;"><strong>${doc.nome_arquivo}</strong></td>
+                                            <td style="padding: 0.75rem;">${nomeColab}</td>
+                                            <td style="padding: 0.75rem;">${doc.matricula_colaborador || '-'}</td>
+                                            <td style="padding: 0.75rem;">${dataEnvio}</td>
+                                            <td style="padding: 0.75rem;"><span class="badge badge--active" style="background: var(--success-600); color: white; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem;">Ativo</span></td>
+                                            <td style="padding: 0.75rem; text-align: center;">
                                                 <button class="btn btn-sm btn-excluir-doc" data-id="${doc.id}" style="font-size: 0.75rem; padding: 0.2rem 0.5rem; background: var(--danger-600); color: white; border: none; border-radius: 4px; margin-right: 5px; cursor: pointer;">Excluir</button>
                                                 ${doc.url_arquivo && doc.url_arquivo !== '#' ? `<button class="btn btn-sm" onclick="window.open('${doc.url_arquivo}', '_blank')" style="font-size: 0.75rem; padding: 0.2rem 0.5rem; background: var(--accent-600, #f59e0b); color: white; border: none; border-radius: 4px; cursor: pointer;">Baixar</button>` : ''}
                                             </td>
@@ -185,8 +184,7 @@ if (typeof window.modulo4Initialized === 'undefined') {
         if (uploadList) uploadList.innerHTML = '';
 
         const totalArquivos = files.length;
-        // Variáveis de controle agora isoladas fora da função iteradora
-        let processadosStatus = { concluidos: 0, sucessos: 0, erros: 0 };
+        let processadosStatus = { concluidos: 0, sucessos: 0, erros: 0, ignorados: 0 };
 
         const statusGlobal = document.createElement('div');
         statusGlobal.style.cssText = 'padding: 0.5rem; background: var(--primary-800); border-radius: var(--radius-md); text-align: center; font-weight: bold; color: white;';
@@ -196,32 +194,37 @@ if (typeof window.modulo4Initialized === 'undefined') {
         async function processarArquivoUnico(file) {
             const nomeArquivo = file.name;
             try {
-                // Separa o nome do arquivo usando o traço "-"
+                // Ignora ficheiros ocultos do sistema (ex: .DS_Store, Thumbs.db)
+                if (nomeArquivo.startsWith('.')) {
+                    return 'ignorado';
+                }
+
                 const nomeBase = nomeArquivo.replace('.pdf', '').replace('.PDF', '');
                 const partes = nomeBase.split('-');
                 
-                // Extrai o mês (índice 1), ano (índice 2) e matrícula (índice 4)
+                // VALIDAÇÃO DE NOMENCLATURA: Exige que o nome tenha partes suficientes geradas por hífen
+                if (partes.length < 5) {
+                    console.warn(`Arquivo ignorado por fora do padrão de nomenclatura: ${nomeArquivo}`);
+                    return 'ignorado';
+                }
+
                 let mesArquivo = partes[1] || '00';
                 let anoArquivo = partes[2] || '0000';
                 let matriculaExtraida = partes[4] || 'Geral';
                 let colaboradorId = null;
 
-                // Dicionário para converter o número do mês em texto
                 const meses = {
                     '01': 'Janeiro', '02': 'Fevereiro', '03': 'Março', '04': 'Abril',
                     '05': 'Maio', '06': 'Junho', '07': 'Julho', '08': 'Agosto',
                     '09': 'Setembro', '10': 'Outubro', '11': 'Novembro', '12': 'Dezembro'
                 };
                 
-                // Cria a competência automática (Ex: "Junho de 2026")
                 const nomeMes = meses[mesArquivo] || mesArquivo;
                 const competenciaDinamica = `${nomeMes} de ${anoArquivo}`;
 
-                // Prepara o upload para o Supabase
                 const extensao = nomeArquivo.split('.').pop();
                 const nomeNoBucket = `holerites_${Date.now()}_${Math.random().toString(36).substring(2,8)}.${extensao}`;
 
-                // Usa o seu bucket 'documentos-colaboradores'
                 const { error: uploadError } = await window.supabaseClient.storage
                     .from('documentos-colaboradores')
                     .upload(nomeNoBucket, file);
@@ -234,7 +237,6 @@ if (typeof window.modulo4Initialized === 'undefined') {
 
                 const urlPublica = urlData.publicUrl;
 
-                // Cruza a matrícula do arquivo (ex: 455) com a matrícula do banco de dados
                 const match = stateModulo4.colaboradores.find(c => {
                     const matBancoLimpa = String(c.matricula || '').replace(/[^0-9]/g, '');
                     const matArquivoLimpa = String(matriculaExtraida).replace(/[^0-9]/g, '');
@@ -245,7 +247,6 @@ if (typeof window.modulo4Initialized === 'undefined') {
                     colaboradorId = match.id;
                 }
 
-                // Monta os dados para salvar no banco
                 const payload = {
                     matricula_colaborador: matriculaExtraida,
                     competencia: competenciaDinamica, 
@@ -257,50 +258,42 @@ if (typeof window.modulo4Initialized === 'undefined') {
                     payload.colaborador_id = colaboradorId;
                 }
 
-                // Salva na tabela
                 const { error: dbError } = await window.supabaseClient
                     .from('holerites')
                     .insert([payload]);
 
                 if (dbError) throw new Error(dbError.message);
 
-                // Sucesso
-                return true; 
+                return 'sucesso'; 
             } catch (err) {
                 console.error(`Erro ao processar ${nomeArquivo}:`, err.message);
-                return false; // Erro
+                return 'erro'; 
             } 
         }
 
-        // Concorrência controlada de 10 em 10 arquivos para alta performance sem travamentos
         const tamanhoLote = 50;
         const arquivosArray = Array.from(files);
 
         for (let i = 0; i < arquivosArray.length; i += tamanhoLote) {
             const lote = arquivosArray.slice(i, i + tamanhoLote);
             
-            // Executa o lote de 10 ficheiros de uma vez e espera o resultado
             const resultados = await Promise.all(lote.map(file => processarArquivoUnico(file)));
             
-            // Atualiza os contadores baseados no resultado das Promises
-            resultados.forEach(sucesso => {
+            resultados.forEach(res => {
                 processadosStatus.concluidos++;
-                if (sucesso) {
-                    processadosStatus.sucessos++;
-                } else {
-                    processadosStatus.erros++;
-                }
+                if (res === 'sucesso') processadosStatus.sucessos++;
+                else if (res === 'erro') processadosStatus.erros++;
+                else if (res === 'ignorado') processadosStatus.ignorados++;
             });
             
-            // Atualiza a visualização em tempo real na tela
-            statusGlobal.textContent = `Processando: ${processadosStatus.concluidos} / ${totalArquivos} concluídos (${processadosStatus.sucessos} sucessos, ${processadosStatus.erros} falhas)`;
+            statusGlobal.textContent = `Processando: ${processadosStatus.concluidos} / ${totalArquivos} (${processadosStatus.sucessos} sucessos, ${processadosStatus.ignorados} ignorados, ${processadosStatus.erros} falhas)`;
         }
 
-        statusGlobal.innerHTML = `<span style="color: var(--success-600);">Processamento em lote finalizado!</span> Total: ${totalArquivos} | Sucessos: ${processadosStatus.sucessos} | Falhas: ${processadosStatus.erros}`;
+        statusGlobal.innerHTML = `<span style="color: var(--success-600);">Processamento em lote finalizado!</span> Sucessos: ${processadosStatus.sucessos} | Ignorados (Fora do padrão): ${processadosStatus.ignorados} | Falhas: ${processadosStatus.erros}`;
 
         setTimeout(() => {
             if (uploadQueue) uploadQueue.style.display = 'none';
-            carregarDocumentos(); // Recarrega a tabela e cria as pastas automaticamente
+            carregarDocumentos(); 
         }, 4000);
     }
 
