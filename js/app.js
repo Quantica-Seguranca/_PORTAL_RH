@@ -32,6 +32,9 @@ const rotas = {
     }
 };
 
+// Armazena os módulos já baixados para evitar requisições repetidas à rede
+const cacheModulos = {};
+
 // Vinculação explícita e obrigatória no escopo global do navegador
 window.carregarModulo = async function(nomeModulo) {
     const rota = rotas[nomeModulo];
@@ -48,23 +51,29 @@ window.carregarModulo = async function(nomeModulo) {
     }
 
     try {
-        // TRUQUE ANTI-CACHE: Adiciona um timestamp na URL para forçar o navegador a baixar sempre a versão mais recente do HTML
-        const versao = new Date().getTime();
-        const resposta = await fetch(`${rota.html}?v=${versao}`);
+        const container = document.getElementById('conteudo-principal');
         
-        if (!resposta.ok) throw new Error("Arquivo HTML não encontrado");
+        // 1. Carrega o HTML (usa o cache se já foi visitado, senão faz o fetch)
+        let html = cacheModulos[nomeModulo];
+        if (!html) {
+            const versao = new Date().getTime();
+            const resposta = await fetch(`${rota.html}?v=${versao}`);
+            if (!resposta.ok) throw new Error("Arquivo HTML não encontrado");
+            html = await resposta.text();
+            cacheModulos[nomeModulo] = html;
+        }
         
-        const html = await resposta.text();
-        document.getElementById('conteudo-principal').innerHTML = html;
+        container.innerHTML = html;
 
-        // Remove o script antigo da memória
+        // 2. Remove o script anterior da memória para evitar conflitos
         const scriptAntigo = document.getElementById('script-modulo-ativo');
         if (scriptAntigo) scriptAntigo.remove();
 
+        // 3. Injeta o JavaScript correspondente
         if (rota.js) {
-            // Cria e injeta o novo script com o TRUQUE ANTI-CACHE
             const script = document.createElement('script');
-            script.src = `${rota.js}?v=${versao}`; // Garante que o JS mais novo será executado
+            const versaoJs = new Date().getTime();
+            script.src = `${rota.js}?v=${versaoJs}`;
             script.id = 'script-modulo-ativo';
             document.body.appendChild(script);
         }
@@ -104,36 +113,34 @@ async function verificarPermissoesMenu() {
             if (menuColaboradores) menuColaboradores.style.display = 'none';
             if (menuPortal) menuPortal.style.display = 'block';
             if (menuHolerites) menuHolerites.style.display = 'none';
-            window.carregarModulo('modulo3'); // Autoload ao logar
-            
+            window.carregarModulo('modulo3');
         } else if (window.userPerfil === 'operacional') {
             if (menuAdmin) menuAdmin.style.display = 'none';
             if (menuColaboradores) menuColaboradores.style.display = 'block';
             if (menuPortal) menuPortal.style.display = 'block';
             if (menuHolerites) menuHolerites.style.display = 'none';
-            window.carregarModulo('modulo2'); // Autoload ao logar
-            
+            window.carregarModulo('modulo2');
         } else if (window.userPerfil === 'admin') {
             if (menuAdmin) menuAdmin.style.display = 'none';
             if (menuColaboradores) menuColaboradores.style.display = 'block';
             if (menuPortal) menuPortal.style.display = 'block';
             if (menuHolerites) menuHolerites.style.display = 'block';
-            window.carregarModulo('modulo2'); // Autoload ao logar
-            
+            window.carregarModulo('modulo2');
         } else {
             // Master e Gerente
             if (menuAdmin) menuAdmin.style.display = 'block';
             if (menuColaboradores) menuColaboradores.style.display = 'block';
             if (menuPortal) menuPortal.style.display = 'block';
             if (menuHolerites) menuHolerites.style.display = 'block';
-            window.carregarModulo('modulo1'); // Autoload ao logar
+            window.carregarModulo('modulo1');
         }
     } catch (e) {
         console.error("Erro ao carregar permissões do menu:", e);
     }
 }
-/*
-// Desativa o botão F12, Ctrl+Shift+I, Ctrl+U (Visualizar Código-Fonte)
+
+/* 
+// [OPCIONAL] Mantenha comentado enquanto estiver a testar os dados com o F12
 document.addEventListener('keydown', function (e) {
     if (
         e.key === 'F12' ||
@@ -145,12 +152,12 @@ document.addEventListener('keydown', function (e) {
         return false;
     }
 });
-/*
 
-// Desativa o menu de clique direito (Inspecionar Elemento)
 document.addEventListener('contextmenu', function (e) {
     e.preventDefault();
 });
+*/
+
 document.addEventListener('DOMContentLoaded', () => {
     verificarPermissoesMenu();
 });
