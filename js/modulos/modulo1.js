@@ -15,9 +15,15 @@ if (typeof window.modulo1Initialized === 'undefined') {
     }
 
     async function loadModulo1Data() {
-        await loadStatistics();
-        await loadUsers();
-        await loadPreCadastros();
+        try {
+            await Promise.allSettled([
+                loadStatistics(),
+                loadUsers(),
+                loadPreCadastros()
+            ]);
+        } catch (e) {
+            console.error('Erro no carregamento do Módulo 1:', e);
+        }
     }
 
     async function loadStatistics() {
