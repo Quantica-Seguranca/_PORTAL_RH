@@ -245,3 +245,39 @@ button {
 .badge--active { background-color: var(--success-100); color: var(--success-600); }
 .badge--inactive { background-color: var(--danger-100); color: var(--danger-600); }
 .badge--pending { background-color: var(--warning-100); color: var(--warning-600); }
+/* ============================================================
+   WRAPPER DE SENHA (OLHO)
+   ============================================================ */
+.password-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.password-wrapper input {
+  width: 100%;
+  padding-right: 2.5rem; /* Cria espaço para o texto não passar por baixo do ícone */
+}
+
+.eye-btn {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--primary-400); /* Usa a cor padrão do seu tema */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: color var(--transition-base);
+}
+
+.eye-btn:hover {
+  color: var(--accent-500); /* Fica âmbar/dourado ao passar o mouse */
+}
+
+.eye-btn:focus {
+  outline: none;
+}
