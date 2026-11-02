@@ -36,24 +36,77 @@ if (typeof window.modulo1Initialized === 'undefined') {
         if(getEl('stat-admins')) getEl('stat-admins').textContent = admins;
     }
 
-    async function loadUsers() {
-        const { page, limit, search } = stateModulo1.pagination;
-        const start = (page - 1) * limit;
-        const end = start + limit - 1;
+   async function loadUsers() {
+    const { page, limit, search } = stateModulo1.pagination;
+    const start = (page - 1) * limit;
+    const end = start + limit - 1;
 
-        let query = window.supabaseClient.from('colaboradores').select('*', { count: 'exact' }).order('nome_completo', { ascending: true }).range(start, end);
+    let query = window.supabaseClient.from('colaboradores').select('*', { count: 'exact' }).order('nome_completo', { ascending: true }).range(start, end);
 
-        if (search) {
-            query = query.or(`nome_completo.ilike.%${search}%,email.ilike.%${search}%`);
-        }
-
-        const { data, error, count } = await query;
-        if (error) { console.error('Erro ao carregar usuários:', error); return; }
-
-        stateModulo1.users = data || [];
-        stateModulo1.pagination.total = count || 0;
-        renderUsersTable();
+    if (search) {
+        query = query.or(`nome_completo.ilike.%${search}%,email.ilike.%${search}%`);
     }
+
+    const { data, error, count } = await query;
+    if (error) { console.error('Erro ao carregar usuários:', error); return; }
+
+    stateModulo1.users = data || [];
+    stateModulo1.pagination.total = count || 0;
+    
+    renderUsersTable();
+    renderPaginationControls(); // <- Adicionado para desenhar os botões de página
+}
+
+// Função para criar os botões de navegação dinamicamente
+function renderPaginationControls() {
+    const containerTabela = document.getElementById('users-table-body');
+    if (!containerTabela) return;
+
+    // Procura ou cria um container de paginação logo abaixo da tabela
+    let paginationContainer = document.getElementById('pagination-container');
+    if (!paginationContainer) {
+        paginationContainer = document.createElement('div');
+        paginationContainer.id = 'pagination-container';
+        paginationContainer.style.cssText = 'display: flex; justify-content: space-between; align-items: center; padding: 1rem; color: var(--primary-300); font-size: 0.875rem;';
+        
+        // Insere após o wrapper da tabela
+        const wrapper = containerTabela.closest('.table-wrapper') || containerTabela.parentElement;
+        wrapper.after(paginationContainer);
+    }
+
+    const { page, limit, total } = stateModulo1.pagination;
+    const totalPages = Math.ceil(total / limit) || 1;
+
+    paginationContainer.innerHTML = `
+        <span>Mostrando página <strong>${page}</strong> de <strong>${totalPages}</strong> (Total: ${total} registos)</span>
+        <div style="display: flex; gap: 0.5rem;">
+            <button id="btn-prev-page" class="btn btn-sm btn-secondary" ${page <= 1 ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''}>Anterior</button>
+            <button id="btn-next-page" class="btn btn-sm btn-secondary" ${page >= totalPages ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''}>Próxima</button>
+        </div>
+    `;
+
+    // Eventos dos botões
+    const btnPrev = document.getElementById('btn-prev-page');
+    const btnNext = document.getElementById('btn-next-page');
+
+    if (btnPrev) {
+        btnPrev.onclick = () => {
+            if (stateModulo1.pagination.page > 1) {
+                stateModulo1.pagination.page--;
+                loadUsers();
+            }
+        };
+    }
+
+    if (btnNext) {
+        btnNext.onclick = () => {
+            if (stateModulo1.pagination.page < totalPages) {
+                stateModulo1.pagination.page++;
+                loadUsers();
+            }
+        };
+    }
+}
 
     async function loadPreCadastros() {
         const tbody = getEl('pre-cadastros-table-body');
