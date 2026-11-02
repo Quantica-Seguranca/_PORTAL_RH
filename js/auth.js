@@ -205,3 +205,4 @@ function togglePasswordVisibility(inputId, iconId) {
             `;
         }
     }
+}
