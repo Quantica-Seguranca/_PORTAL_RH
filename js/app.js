@@ -132,7 +132,23 @@ async function verificarPermissoesMenu() {
         console.error("Erro ao carregar permissões do menu:", e);
     }
 }
+// Desativa o botão F12, Ctrl+Shift+I, Ctrl+U (Visualizar Código-Fonte)
+document.addEventListener('keydown', function (e) {
+    if (
+        e.key === 'F12' ||
+        (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C')) ||
+        (e.ctrlKey && e.key === 'u')
+    ) {
+        e.preventDefault();
+        alert('Ação restrita pelo sistema de segurança.');
+        return false;
+    }
+});
 
+// Desativa o menu de clique direito (Inspecionar Elemento)
+document.addEventListener('contextmenu', function (e) {
+    e.preventDefault();
+});
 document.addEventListener('DOMContentLoaded', () => {
     verificarPermissoesMenu();
 });
