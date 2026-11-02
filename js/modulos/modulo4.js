@@ -94,7 +94,7 @@ if (typeof window.modulo4Initialized === 'undefined') {
                             <tbody>
                                 ${itensDaCompetencia.map(doc => {
                                     const colab = stateModulo4.colaboradores.find(c => {
-                                        if (c.id === doc.colaborador_id) return true;
+                                        if (doc.colaborador_id && c.id === doc.colaborador_id) return true;
                                         const matBancoLimpa = String(c.matricula || '').replace(/[^0-9]/g, '');
                                         const matDocLimpa = String(doc.matricula_colaborador || '').replace(/[^0-9]/g, '');
                                         return matBancoLimpa && matDocLimpa && matBancoLimpa === matDocLimpa;
@@ -185,9 +185,8 @@ if (typeof window.modulo4Initialized === 'undefined') {
         if (uploadList) uploadList.innerHTML = '';
 
         const totalArquivos = files.length;
-        let concluidos = 0;
-        let sucessos = 0;
-        let erros = 0;
+        // Variáveis de controle agora isoladas fora da função iteradora
+        let processadosStatus = { concluidos: 0, sucessos: 0, erros: 0 };
 
         const statusGlobal = document.createElement('div');
         statusGlobal.style.cssText = 'padding: 0.5rem; background: var(--primary-800); border-radius: var(--radius-md); text-align: center; font-weight: bold; color: white;';
@@ -197,9 +196,32 @@ if (typeof window.modulo4Initialized === 'undefined') {
         async function processarArquivoUnico(file) {
             const nomeArquivo = file.name;
             try {
+                // Separa o nome do arquivo usando o traço "-"
+                const nomeBase = nomeArquivo.replace('.pdf', '').replace('.PDF', '');
+                const partes = nomeBase.split('-');
+                
+                // Extrai o mês (índice 1), ano (índice 2) e matrícula (índice 4)
+                let mesArquivo = partes[1] || '00';
+                let anoArquivo = partes[2] || '0000';
+                let matriculaExtraida = partes[4] || 'Geral';
+                let colaboradorId = null;
+
+                // Dicionário para converter o número do mês em texto
+                const meses = {
+                    '01': 'Janeiro', '02': 'Fevereiro', '03': 'Março', '04': 'Abril',
+                    '05': 'Maio', '06': 'Junho', '07': 'Julho', '08': 'Agosto',
+                    '09': 'Setembro', '10': 'Outubro', '11': 'Novembro', '12': 'Dezembro'
+                };
+                
+                // Cria a competência automática (Ex: "Junho de 2026")
+                const nomeMes = meses[mesArquivo] || mesArquivo;
+                const competenciaDinamica = `${nomeMes} de ${anoArquivo}`;
+
+                // Prepara o upload para o Supabase
                 const extensao = nomeArquivo.split('.').pop();
                 const nomeNoBucket = `holerites_${Date.now()}_${Math.random().toString(36).substring(2,8)}.${extensao}`;
 
+                // Usa o seu bucket 'documentos-colaboradores'
                 const { error: uploadError } = await window.supabaseClient.storage
                     .from('documentos-colaboradores')
                     .upload(nomeNoBucket, file);
@@ -212,10 +234,7 @@ if (typeof window.modulo4Initialized === 'undefined') {
 
                 const urlPublica = urlData.publicUrl;
 
-                const partes = nomeArquivo.split('-');
-                let matriculaExtraida = partes[4] || 'Geral';
-                let colaboradorId = null;
-
+                // Cruza a matrícula do arquivo (ex: 455) com a matrícula do banco de dados
                 const match = stateModulo4.colaboradores.find(c => {
                     const matBancoLimpa = String(c.matricula || '').replace(/[^0-9]/g, '');
                     const matArquivoLimpa = String(matriculaExtraida).replace(/[^0-9]/g, '');
@@ -226,9 +245,10 @@ if (typeof window.modulo4Initialized === 'undefined') {
                     colaboradorId = match.id;
                 }
 
+                // Monta os dados para salvar no banco
                 const payload = {
                     matricula_colaborador: matriculaExtraida,
-                    competencia: 'Junho de 2026',
+                    competencia: competenciaDinamica, 
                     nome_arquivo: nomeArquivo,
                     url_arquivo: urlPublica
                 };
@@ -237,36 +257,50 @@ if (typeof window.modulo4Initialized === 'undefined') {
                     payload.colaborador_id = colaboradorId;
                 }
 
+                // Salva na tabela
                 const { error: dbError } = await window.supabaseClient
                     .from('holerites')
                     .insert([payload]);
 
                 if (dbError) throw new Error(dbError.message);
 
-                sucessos++;
+                // Sucesso
+                return true; 
             } catch (err) {
-                erros++;
                 console.error(`Erro ao processar ${nomeArquivo}:`, err.message);
-            } finally {
-                concluidos++;
-                statusGlobal.textContent = `Processando: ${concluidos} / ${totalArquivos} concluídos (${sucessos} sucessos, ${erros} falhas)`;
-            }
+                return false; // Erro
+            } 
         }
 
         // Concorrência controlada de 10 em 10 arquivos para alta performance sem travamentos
-        const tamanhoLote = 10;
+        const tamanhoLote = 50;
         const arquivosArray = Array.from(files);
 
         for (let i = 0; i < arquivosArray.length; i += tamanhoLote) {
             const lote = arquivosArray.slice(i, i + tamanhoLote);
-            await Promise.all(lote.map(file => processarArquivoUnico(file)));
+            
+            // Executa o lote de 10 ficheiros de uma vez e espera o resultado
+            const resultados = await Promise.all(lote.map(file => processarArquivoUnico(file)));
+            
+            // Atualiza os contadores baseados no resultado das Promises
+            resultados.forEach(sucesso => {
+                processadosStatus.concluidos++;
+                if (sucesso) {
+                    processadosStatus.sucessos++;
+                } else {
+                    processadosStatus.erros++;
+                }
+            });
+            
+            // Atualiza a visualização em tempo real na tela
+            statusGlobal.textContent = `Processando: ${processadosStatus.concluidos} / ${totalArquivos} concluídos (${processadosStatus.sucessos} sucessos, ${processadosStatus.erros} falhas)`;
         }
 
-        statusGlobal.innerHTML = `<span style="color: var(--success-600);">Processamento em lote finalizado!</span> Total: ${totalArquivos} | Sucessos: ${sucessos} | Falhas: ${erros}`;
+        statusGlobal.innerHTML = `<span style="color: var(--success-600);">Processamento em lote finalizado!</span> Total: ${totalArquivos} | Sucessos: ${processadosStatus.sucessos} | Falhas: ${processadosStatus.erros}`;
 
         setTimeout(() => {
             if (uploadQueue) uploadQueue.style.display = 'none';
-            carregarDocumentos();
+            carregarDocumentos(); // Recarrega a tabela e cria as pastas automaticamente
         }, 4000);
     }
 
