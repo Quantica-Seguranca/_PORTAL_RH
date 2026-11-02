@@ -479,5 +479,5 @@ if (typeof window.modulo1Initialized === 'undefined') {
   // Garante que o DOM do módulo foi totalmente inserido antes de carregar os dados
     setTimeout(() => {
         initModulo1();
-    }, 50);
+    }, 100);
 }
