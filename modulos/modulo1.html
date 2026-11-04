@@ -1,3 +1,6 @@
+<!-- Bibliotecas para o Gráfico (Carregadas diretamente do CDN) -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <header class="app-header">
     <div class="header-left">
         <h2 class="page-title">Gestão de Usuários e Privilégios</h2>
@@ -8,37 +11,43 @@
 </header>
 
 <div class="content-area">
-    <!-- Estatísticas -->
-    <div class="dashboard-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
-        <div class="stat-card panel p-4">
-            <div class="stat-card__content" style="display: flex; flex-direction: column;">
-                <span class="stat-card__label" style="font-size: 0.8rem; color: var(--primary-400);">Total Efetivo</span>
-                <span class="stat-card__value" id="stat-total" style="font-size: 1.5rem; font-weight: bold; color: white;">0</span>
+    
+    <!-- DASHBOARD E ESTATÍSTICAS -->
+    <div class="dashboard-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; align-items: stretch;">
+        
+        <!-- Bloco Esquerdo: Cards de Números -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; flex: 2; min-width: 300px;">
+            <div class="stat-card panel p-4" style="display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;">
+                <span class="stat-card__label" style="font-size: 0.85rem; color: var(--primary-400, #aaa); text-transform: uppercase;">Total Efetivo</span>
+                <span class="stat-card__value" id="stat-total" style="font-size: 2.5rem; font-weight: bold; color: var(--accent-500, #f0a500);">0</span>
+            </div>
+            <div class="stat-card panel p-4" style="display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;">
+                <span class="stat-card__label" style="font-size: 0.85rem; color: var(--primary-400, #aaa); text-transform: uppercase;">Ativos</span>
+                <span class="stat-card__value" id="stat-active" style="font-size: 2.5rem; font-weight: bold; color: var(--success-600, #28a745);">0</span>
+            </div>
+            <div class="stat-card panel p-4" style="display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;">
+                <span class="stat-card__label" style="font-size: 0.85rem; color: var(--primary-400, #aaa); text-transform: uppercase;">Operadores / Fiscais</span>
+                <span class="stat-card__value" id="stat-operators" style="font-size: 2.5rem; font-weight: bold; color: white;">0</span>
+            </div>
+            <div class="stat-card panel p-4" style="display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;">
+                <span class="stat-card__label" style="font-size: 0.85rem; color: var(--primary-400, #aaa); text-transform: uppercase;">Admins / Gestão</span>
+                <span class="stat-card__value" id="stat-admins" style="font-size: 2.5rem; font-weight: bold; color: white;">0</span>
             </div>
         </div>
-        <div class="stat-card panel p-4">
-            <div class="stat-card__content" style="display: flex; flex-direction: column;">
-                <span class="stat-card__label" style="font-size: 0.8rem; color: var(--primary-400);">Ativos</span>
-                <span class="stat-card__value" id="stat-active" style="font-size: 1.5rem; font-weight: bold; color: white;">0</span>
+
+        <!-- Bloco Direito: Gráfico Visual de Efetivo -->
+        <div class="panel p-4" style="flex: 1; min-width: 250px; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+            <h4 style="color: var(--primary-400, #aaa); font-size: 0.85rem; text-transform: uppercase; margin-bottom: 0.5rem;">Proporção de Efetivo</h4>
+            <div style="position: relative; height: 180px; width: 100%;">
+                <canvas id="graficoEfetivo"></canvas>
             </div>
         </div>
-        <div class="stat-card panel p-4">
-            <div class="stat-card__content" style="display: flex; flex-direction: column;">
-                <span class="stat-card__label" style="font-size: 0.8rem; color: var(--primary-400);">Operadores</span>
-                <span class="stat-card__value" id="stat-operators" style="font-size: 1.5rem; font-weight: bold; color: white;">0</span>
-            </div>
-        </div>
-        <div class="stat-card panel p-4">
-            <div class="stat-card__content" style="display: flex; flex-direction: column;">
-                <span class="stat-card__label" style="font-size: 0.8rem; color: var(--primary-400);">Admins / Gestão</span>
-                <span class="stat-card__value" id="stat-admins" style="font-size: 1.5rem; font-weight: bold; color: white;">0</span>
-            </div>
-        </div>
+        
     </div>
 
     <!-- Painel de Aprovação de Pré-Cadastros Pendentes -->
-    <div class="panel p-6" style="margin-bottom: 1.5rem; border: 1px solid var(--accent-500);">
-        <h3 style="color: var(--accent-500); margin-bottom: 1rem; font-size: 1rem;">Solicitações de Pré-Cadastro Pendentes</h3>
+    <div class="panel p-6" style="margin-bottom: 1.5rem; border: 1px solid var(--accent-500, #f0a500);">
+        <h3 style="color: var(--accent-500, #f0a500); margin-bottom: 1rem; font-size: 1rem; font-weight: bold;">Solicitações de Pré-Cadastro Pendentes</h3>
         <div class="table-wrapper">
             <table class="data-table">
                 <thead>
@@ -51,20 +60,24 @@
                     </tr>
                 </thead>
                 <tbody id="pre-cadastros-table-body">
-                    <tr><td colspan="5" class="text-center" style="text-align: center; padding: 1rem;">Carregando solicitações...</td></tr>
+                    <tr><td colspan="5" class="text-center" style="text-align: center; padding: 1rem; color: #888;">Carregando solicitações...</td></tr>
                 </tbody>
             </table>
         </div>
     </div>
 
     <!-- Tabela e Controles de Gestão de Usuários -->
-    <div class="panel">
-        <div class="panel__header">
-            <div class="search-box">
-                <input type="text" id="search-users" class="search-box__input form-input" placeholder="Buscar por nome ou e-mail...">
+    <div class="panel p-6">
+        <div class="panel__header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1rem;">
+            <div class="search-box" style="flex: 1; min-width: 250px;">
+                <input type="text" id="search-users" class="search-box__input form-input" placeholder="Buscar por nome ou e-mail..." style="width: 100%; padding: 0.5rem; border-radius: 4px; border: 1px solid var(--primary-700); background: var(--primary-800); color: white;">
             </div>
-            <button id="btn-new-user" class="btn btn-primary">Novo Colaborador</button>
+            <div style="display: flex; gap: 0.5rem;" id="container-botoes-topo">
+                <button id="btn-new-user" class="btn btn-primary" style="background: var(--accent-500, #f0a500); color: black; font-weight: bold; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer;">Novo Colaborador</button>
+                <!-- O botão de exportar será injetado aqui pelo JS dinamicamente -->
+            </div>
         </div>
+        
         <div class="table-wrapper">
             <table class="data-table">
                 <thead>
@@ -87,30 +100,76 @@
 </div>
 
 <!-- Modal de Novo Usuário -->
-<div id="modal-create-user" class="modal-overlay" style="display: none;">
-    <div class="modal">
-        <div class="modal__header">
-            <h3 class="modal__title">Cadastrar Novo Efetivo</h3>
-            <button class="modal-close btn-icon" type="button" style="color: white; font-size: 1.25rem; cursor: pointer;">X</button>
+<div id="modal-create-user" class="modal-overlay" style="display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); justify-content:center; align-items:center; z-index:999;">
+    <div class="modal" style="background: var(--primary-900, #1a1a1a); padding: 2rem; border-radius: 8px; width: 90%; max-width: 500px; border: 1px solid var(--accent-500, #f0a500);">
+        <div class="modal__header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <h3 class="modal__title" style="color: var(--accent-500, #f0a500); margin: 0;">Cadastrar Novo Efetivo</h3>
+            <button class="modal-close btn-icon" type="button" style="background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer;">&times;</button>
         </div>
         <div class="modal__body">
             <form id="create-user-form">
                 <div class="form-row" style="margin-bottom: 1rem; display: flex; flex-direction: column; gap: 0.75rem;">
-                    <input type="text" name="nome" placeholder="Nome Completo" class="form-input" required>
-                    <input type="email" name="email" placeholder="E-mail" class="form-input" required>
+                    <input type="text" name="nome" placeholder="Nome Completo" class="form-input" style="padding: 0.75rem; background: var(--primary-800); color: white; border: 1px solid var(--primary-700); border-radius: 4px;" required>
+                    <input type="email" name="email" placeholder="E-mail" class="form-input" style="padding: 0.75rem; background: var(--primary-800); color: white; border: 1px solid var(--primary-700); border-radius: 4px;" required>
                 </div>
-                <div class="form-row" style="margin-bottom: 1rem; display: flex; flex-direction: column; gap: 0.75rem;">
-                    <input type="password" name="password" placeholder="Senha Temporária" class="form-input" required>
-                    <select name="perfil" class="form-select" style="width: 100%; padding: 0.875rem 1rem; background: var(--primary-700); color: white; border: 1px solid var(--primary-600); border-radius: var(--radius-md);">
+                <div class="form-row" style="margin-bottom: 1.5rem; display: flex; flex-direction: column; gap: 0.75rem;">
+                    <input type="password" name="password" placeholder="Senha Temporária" class="form-input" style="padding: 0.75rem; background: var(--primary-800); color: white; border: 1px solid var(--primary-700); border-radius: 4px;" required>
+                    <select name="perfil" class="form-select" style="width: 100%; padding: 0.75rem; background: var(--primary-800); color: white; border: 1px solid var(--primary-700); border-radius: 4px;">
                         <option value="colaborador">Colaborador</option>
-                        <option value="operacional">Operador / Fiscal</option>
+                        <option value="operador">Operador / Fiscal</option>
                         <option value="admin">Administrador</option>
                         <option value="gerente">Gerência</option>
-                        <option value="master">Master</option>
+                        <option value="gestor">Gestor / ADM</option>
                     </select>
                 </div>
-                <button type="submit" class="btn btn-primary" style="width:100%; margin-top: 10px;">Salvar Cadastro</button>
+                <button type="submit" class="btn btn-primary" style="width:100%; padding: 0.75rem; background: var(--success-600, #28a745); color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer;">Salvar Cadastro</button>
             </form>
         </div>
     </div>
 </div>
+
+<!-- Lógica de Injeção do Gráfico Chart.js -->
+<script>
+    let myChart = null; // Variável global para destruir o gráfico antigo ao recarregar
+
+    // Observador para verificar quando os números carregam e atualizar o gráfico
+    const observer = new MutationObserver(() => {
+        const numOps = parseInt(document.getElementById('stat-operators').textContent) || 0;
+        const numAdms = parseInt(document.getElementById('stat-admins').textContent) || 0;
+        
+        // Só desenha se houver dados e se o canvas existir
+        const ctx = document.getElementById('graficoEfetivo');
+        if (ctx && (numOps > 0 || numAdms > 0)) {
+            if (myChart) myChart.destroy(); // Limpa o gráfico anterior
+
+            myChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Operacionais', 'Administrativos'],
+                    datasets: [{
+                        data: [numOps, numAdms],
+                        backgroundColor: [
+                            '#17a2b8', // Info Blue (Operadores)
+                            '#f0a500'  // Accent Gold (Admins)
+                        ],
+                        borderColor: '#1a1a1a', // Fundo Dark
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { color: '#ccc', font: { size: 11 } } }
+                    }
+                }
+            });
+        }
+    });
+
+    // Inicia a observação sobre os campos numéricos para reagir quando o Javascript injetar os valores
+    setTimeout(() => {
+        const target = document.getElementById('stat-operators');
+        if (target) observer.observe(target, { childList: true, characterData: true, subtree: true });
+    }, 1000);
+</script>
