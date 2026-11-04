@@ -10,6 +10,21 @@ if (typeof window.modulo1Initialized === 'undefined') {
         selectedUserId: null
     };
 
+    // Hierarquia numérica para controle de permissões
+    const HIERARQUIA = {
+        'master': 5,
+        'gestor': 4,
+        'gerente': 3,
+        'admin': 2,       // Administrador (RH)
+        'operador': 1,    // Operador
+        'operacional': 1, // Compatibilidade com registros legados
+        'colaborador': 0
+    };
+
+    function obterPerfilLogado() {
+        return (localStorage.getItem('user_role') || window.userPerfil || 'colaborador').toLowerCase();
+    }
+
     function getEl(id) { return document.getElementById(id); }
 
     function formatDate(isoString) {
@@ -31,13 +46,19 @@ if (typeof window.modulo1Initialized === 'undefined') {
 
     async function loadStatistics() {
         try {
+            const perfilLogado = obterPerfilLogado();
             const { data, error } = await window.supabaseClient.from('colaboradores').select('*');
             if (error) { console.error('Erro nas estatísticas:', error); return; }
 
-            const lista = data || [];
+            // Se quem estiver logado NÃO for master, filtra os registros master da contagem
+            const lista = (data || []).filter(u => {
+                if (u.perfil === 'master' && perfilLogado !== 'master') return false;
+                return true;
+            });
+
             const ativos = lista.filter(u => (u.status || 'Ativo').toLowerCase() === 'ativo').length;
-            const operadores = lista.filter(u => u.perfil === 'operacional').length;
-            const admins = lista.filter(u => ['admin', 'gerente', 'master'].includes(u.perfil)).length;
+            const operadores = lista.filter(u => ['operacional', 'operador'].includes(u.perfil)).length;
+            const admins = lista.filter(u => ['admin', 'gerente', 'gestor', 'master'].includes(u.perfil)).length;
 
             if(getEl('stat-total')) getEl('stat-total').textContent = lista.length;
             if(getEl('stat-active')) getEl('stat-active').textContent = ativos;
@@ -50,6 +71,7 @@ if (typeof window.modulo1Initialized === 'undefined') {
 
     async function loadUsers() {
         try {
+            const perfilLogado = obterPerfilLogado();
             const { page, limit, search } = stateModulo1.pagination;
             const start = (page - 1) * limit;
             const end = start + limit - 1;
@@ -57,14 +79,18 @@ if (typeof window.modulo1Initialized === 'undefined') {
             let query = window.supabaseClient
                 .from('colaboradores')
                 .select('*', { count: 'exact' })
-                .order('nome_completo', { ascending: true })
-                .range(start, end);
+                .order('nome_completo', { ascending: true });
+
+            // REGRA MASTER: Se não for master, esconde totalmente registros master direto da query
+            if (perfilLogado !== 'master') {
+                query = query.neq('perfil', 'master');
+            }
 
             if (search) {
                 query = query.or(`nome_completo.ilike.%${search}%,email.ilike.%${search}%`);
             }
 
-            const { data, error, count } = await query;
+            const { data, error, count } = await query.range(start, end);
             if (error) { console.error('Erro ao carregar usuários:', error); return; }
 
             stateModulo1.users = data || [];
@@ -129,7 +155,6 @@ if (typeof window.modulo1Initialized === 'undefined') {
             const tbody = getEl('pre-cadastros-table-body');
             if (!tbody) return;
 
-            // Restaura o filtro rigoroso para exibir apenas solicitações pendentes
             const { data, error } = await window.supabaseClient
                 .from('pre_cadastros')
                 .select('*')
@@ -245,12 +270,33 @@ if (typeof window.modulo1Initialized === 'undefined') {
             return;
         }
 
+        const perfilLogado = obterPerfilLogado();
+        const nivelLogado = HIERARQUIA[perfilLogado] || 0;
+        const podeConcederAcessos = ['master', 'gestor'].includes(perfilLogado);
+
         stateModulo1.users.forEach((user) => {
             const tr = document.createElement('tr');
             tr.style.borderBottom = '1px solid var(--primary-800, #333)';
             
             const statusAtual = user.status || 'Ativo';
             const perfilAtual = user.perfil || 'colaborador';
+            const nivelAlvo = HIERARQUIA[perfilAtual] || 0;
+
+            // Restrição de Ações: RH e Gerência não concedem acesso se não autorizados
+            let botaoGerir = '';
+            if (podeConcederAcessos) {
+                botaoGerir = `<button class="btn btn-sm btn-gerir" data-id="${user.id}" style="background: var(--info-600, #17a2b8); color: white; font-size: 0.75rem; padding: 0.3rem 0.75rem; border: none; border-radius: 4px; cursor: pointer;">Gerir Acesso</button>`;
+            } else {
+                botaoGerir = `<button class="btn btn-sm btn-gerir" data-id="${user.id}" style="background: var(--primary-700, #555); color: #bbb; font-size: 0.75rem; padding: 0.3rem 0.75rem; border: none; border-radius: 4px; cursor: pointer;">Editar Info</button>`;
+            }
+
+            // Apenas pode excluir se tiver nível superior ou igual ao alvo e for pelo menos Admin (RH)
+            let botaoExcluir = '';
+            if (nivelLogado >= 2 && nivelLogado > nivelAlvo) {
+                botaoExcluir = `<button class="btn btn-sm btn-excluir" data-id="${user.id}" style="background-color: var(--danger-600, #dc3545); color: white; font-size: 0.75rem; padding: 0.3rem 0.75rem; border: none; border-radius: 4px; cursor: pointer; margin-left: 0.5rem;">Excluir</button>`;
+            } else {
+                botaoExcluir = `<button class="btn btn-sm" disabled style="background-color: #333; color: #777; font-size: 0.75rem; padding: 0.3rem 0.75rem; border: none; border-radius: 4px; cursor: not-allowed; margin-left: 0.5rem;">Bloqueado</button>`;
+            }
 
             tr.innerHTML = `
                 <td style="padding: 0.75rem;">${user.nome_completo || 'Não informado'}</td>
@@ -267,8 +313,8 @@ if (typeof window.modulo1Initialized === 'undefined') {
                 </td>
                 <td style="padding: 0.75rem;">${formatDate(user.criado_em)}</td>
                 <td style="padding: 0.75rem; text-align: center;">
-                    <button class="btn btn-sm btn-gerir" data-id="${user.id}" style="background: var(--info-600, #17a2b8); color: white; font-size: 0.75rem; padding: 0.3rem 0.75rem; border: none; border-radius: 4px; cursor: pointer;">Gerir Acesso</button>
-                    <button class="btn btn-sm btn-excluir" data-id="${user.id}" style="background-color: var(--danger-600, #dc3545); color: white; font-size: 0.75rem; padding: 0.3rem 0.75rem; border: none; border-radius: 4px; cursor: pointer; margin-left: 0.5rem;">Excluir</button>
+                    ${botaoGerir}
+                    ${botaoExcluir}
                 </td>
             `;
             tbody.appendChild(tr);
@@ -287,11 +333,22 @@ if (typeof window.modulo1Initialized === 'undefined') {
 
         document.querySelectorAll('.btn-excluir').forEach(btn => {
             btn.addEventListener('click', async (e) => {
-                if (!confirm('Deseja realmente excluir este usuário da base?')) return;
                 const id = e.target.getAttribute('data-id');
-
                 const usuarioParaExcluir = stateModulo1.users.find(u => u.id === id);
-                const emailUsuario = usuarioParaExcluir ? usuarioParaExcluir.email : null;
+                if (!usuarioParaExcluir) return;
+
+                const perfilLogado = obterPerfilLogado();
+                const nivelLogado = HIERARQUIA[perfilLogado] || 0;
+                const nivelAlvo = HIERARQUIA[usuarioParaExcluir.perfil] || 0;
+
+                if (nivelLogado <= nivelAlvo && perfilLogado !== 'master') {
+                    alert('Permissão insuficiente para excluir este usuário.');
+                    return;
+                }
+
+                if (!confirm(`Deseja realmente excluir ${usuarioParaExcluir.nome_completo || 'este usuário'} da base?`)) return;
+
+                const emailUsuario = usuarioParaExcluir.email;
 
                 const { error } = await window.supabaseClient
                     .from('colaboradores')
@@ -318,6 +375,9 @@ if (typeof window.modulo1Initialized === 'undefined') {
     function abrirPainelEdicao(id) {
         const user = stateModulo1.users.find(u => u.id === id);
         if (!user) return;
+
+        const perfilLogado = obterPerfilLogado();
+        const podeConcederAcessos = ['master', 'gestor'].includes(perfilLogado);
 
         stateModulo1.selectedUserId = id;
         
@@ -350,10 +410,11 @@ if (typeof window.modulo1Initialized === 'undefined') {
                             <label style="display:block; font-size:0.8rem; color:var(--primary-400, #ccc); margin-bottom:0.25rem;">Nível Corporativo (Role)</label>
                             <select id="edit-perfil" class="form-input" style="width: 100%; padding: 0.5rem; background: var(--primary-700, #333); color: white; border: 1px solid var(--primary-600, #555); border-radius: 4px;">
                                 <option value="colaborador">Colaborador</option>
-                                <option value="operacional">Operador / Fiscal</option>
-                                <option value="admin">Administrador</option>
+                                <option value="operador">Operador</option>
+                                <option value="admin">Administrador (RH)</option>
                                 <option value="gerente">Gerência</option>
-                                <option value="master">Master</option>
+                                <option value="gestor">Gestor / ADM</option>
+                                ${perfilLogado === 'master' ? '<option value="master">Master</option>' : ''}
                             </select>
                         </div>
                     </div>
@@ -382,6 +443,12 @@ if (typeof window.modulo1Initialized === 'undefined') {
         getEl('edit-perfil').value = user.perfil || 'colaborador';
         getEl('edit-status').value = user.status || 'Ativo';
 
+        // Trava de perfil se não for Master ou Gestor
+        const selectPerfil = getEl('edit-perfil');
+        if (selectPerfil) {
+            selectPerfil.disabled = !podeConcederAcessos;
+        }
+
         const formEditar = getEl('form-editar-privilegios');
         if (formEditar) {
             formEditar.onsubmit = async (e) => {
@@ -391,9 +458,13 @@ if (typeof window.modulo1Initialized === 'undefined') {
                 const payload = {
                     nome_completo: getEl('edit-nome').value.trim(),
                     cargo: getEl('edit-cargo').value.trim(),
-                    perfil: getEl('edit-perfil').value,
                     status: getEl('edit-status').value
                 };
+
+                // Apenas salva a role se tiver permissão de conceder acesso
+                if (podeConcederAcessos) {
+                    payload.perfil = getEl('edit-perfil').value;
+                }
 
                 const { error } = await window.supabaseClient
                     .from('colaboradores')
@@ -401,9 +472,9 @@ if (typeof window.modulo1Initialized === 'undefined') {
                     .eq('id', stateModulo1.selectedUserId);
 
                 if (error) {
-                    alert('Erro ao atualizar privilégios: ' + error.message);
+                    alert('Erro ao atualizar dados: ' + error.message);
                 } else {
-                    alert('Privilégios atualizados com sucesso!');
+                    alert('Dados atualizados com sucesso!');
                     getEl('painel-edicao-usuario').style.display = 'none';
                     loadModulo1Data();
                 }
@@ -423,25 +494,31 @@ if (typeof window.modulo1Initialized === 'undefined') {
     function initModulo1() {
         const btnNewUser = getEl('btn-new-user');
         const modalCreate = getEl('modal-create-user');
+        const perfilLogado = obterPerfilLogado();
         
-        if(btnNewUser && modalCreate) {
-            btnNewUser.addEventListener('click', () => { modalCreate.style.display = 'flex'; });
+        // Bloqueia a criação livre de novos usuários para quem não pode conceder acessos
+        if (btnNewUser) {
+            if (!['master', 'gestor', 'admin'].includes(perfilLogado)) {
+                btnNewUser.style.display = 'none';
+            } else {
+                btnNewUser.addEventListener('click', () => { if (modalCreate) modalCreate.style.display = 'flex'; });
+            }
         }
 
         const modalClose = document.querySelector('.modal-close');
-        if(modalClose && modalCreate) {
+        if (modalClose && modalCreate) {
             modalClose.addEventListener('click', () => { modalCreate.style.display = 'none'; });
         }
 
         const createUserForm = getEl('create-user-form');
-        if(createUserForm) {
+        if (createUserForm) {
             createUserForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const formData = new FormData(createUserForm);
                 const nome_completo = formData.get('nome');
                 const email = formData.get('email');
                 const password = formData.get('password');
-                const perfil = formData.get('perfil');
+                const perfil = formData.get('perfil') || 'colaborador';
 
                 const { error: authError } = await window.supabaseClient.auth.signUp({
                     email: email,
@@ -466,7 +543,7 @@ if (typeof window.modulo1Initialized === 'undefined') {
                 if (error) {
                     alert('Erro ao cadastrar usuário na base.');
                 } else {
-                    modalCreate.style.display = 'none';
+                    if (modalCreate) modalCreate.style.display = 'none';
                     createUserForm.reset();
                     loadModulo1Data();
                 }
@@ -474,7 +551,7 @@ if (typeof window.modulo1Initialized === 'undefined') {
         }
 
         const searchInput = getEl('search-users');
-        if(searchInput) {
+        if (searchInput) {
             searchInput.addEventListener('input', (e) => {
                 stateModulo1.pagination.search = e.target.value.trim();
                 stateModulo1.pagination.page = 1;
@@ -483,7 +560,6 @@ if (typeof window.modulo1Initialized === 'undefined') {
         }
     }
 
-    // Inicializa o módulo e executa o carregamento com atraso seguro para o DOM
     initModulo1();
     setTimeout(() => {
         loadModulo1Data();
