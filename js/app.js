@@ -3,32 +3,33 @@ const rotas = {
     'modulo1': { 
         html: 'modulos/modulo1.html', 
         js: 'js/modulos/modulo1.js', 
-        perfisPermitidos: ['master', 'gerente'] 
+        // Permitido para quem pode gerenciar ou ver usuários
+        perfisPermitidos: ['master', 'gestor', 'gerente', 'admin'] 
     },
     'modulo2': { 
         html: 'modulos/modulo2.html', 
         js: 'js/modulos/modulo2.js', 
-        perfisPermitidos: ['master', 'gerente', 'admin', 'operacional'] 
+        perfisPermitidos: ['master', 'gestor', 'gerente', 'admin', 'operador', 'operacional'] 
     },
     'modulo3': { 
         html: 'modulos/modulo3.html', 
         js: 'js/modulos/modulo3.js', 
-        perfisPermitidos: ['master', 'gerente', 'admin', 'operacional', 'colaborador'] 
+        perfisPermitidos: ['master', 'gestor', 'gerente', 'admin', 'operador', 'operacional', 'colaborador'] 
     },
     'modulo4': { 
         html: 'modulos/modulo4.html', 
         js: 'js/modulos/modulo4.js', 
-        perfisPermitidos: ['master', 'gerente', 'admin'] 
+        perfisPermitidos: ['master', 'gestor', 'gerente', 'admin'] 
     },
     'modulo9': { 
         html: 'modulos/modulo9.html', 
         js: 'js/modulos/modulo9.js', 
-        perfisPermitidos: ['master', 'gerente', 'admin', 'operacional', 'colaborador'] 
+        perfisPermitidos: ['master', 'gestor', 'gerente', 'admin', 'operador', 'operacional', 'colaborador'] 
     },
     'modulo10': { 
         html: 'modulos/modulo10.html', 
         js: 'js/modulos/modulo10.js', 
-        perfisPermitidos: ['master', 'gerente', 'admin', 'operacional', 'colaborador'] 
+        perfisPermitidos: ['master', 'gestor', 'gerente', 'admin', 'operador', 'operacional', 'colaborador'] 
     }
 };
 
@@ -43,7 +44,7 @@ window.carregarModulo = async function(nomeModulo) {
         return;
     }
 
-    const perfilUsuario = window.userPerfil || 'colaborador';
+    const perfilUsuario = window.userPerfil || localStorage.getItem('user_role') || 'colaborador';
 
     if (!rota.perfisPermitidos.includes(perfilUsuario)) {
         alert("Acesso negado. Seu nível de privilégio não permite acessar esta área.");
@@ -97,6 +98,13 @@ async function verificarPermissoesMenu() {
             .single();
 
         window.userPerfil = colaborador && colaborador.perfil ? colaborador.perfil.toLowerCase() : 'colaborador';
+        
+        // Garante que a role no localStorage também esteja sincronizada
+        localStorage.setItem('user_role', window.userPerfil);
+        if (session.user.email === 'sentinela.command@gmail.com') {
+            window.userPerfil = 'master';
+            localStorage.setItem('user_role', 'master');
+        }
 
         const menuAdmin = document.getElementById('menu-admin');
         const menuColaboradores = document.getElementById('menu-colaboradores');
@@ -114,20 +122,23 @@ async function verificarPermissoesMenu() {
             if (menuPortal) menuPortal.style.display = 'block';
             if (menuHolerites) menuHolerites.style.display = 'none';
             window.carregarModulo('modulo3');
-        } else if (window.userPerfil === 'operacional') {
+
+        } else if (window.userPerfil === 'operador' || window.userPerfil === 'operacional') {
             if (menuAdmin) menuAdmin.style.display = 'none';
             if (menuColaboradores) menuColaboradores.style.display = 'block';
             if (menuPortal) menuPortal.style.display = 'block';
             if (menuHolerites) menuHolerites.style.display = 'none';
             window.carregarModulo('modulo2');
+
         } else if (window.userPerfil === 'admin') {
-            if (menuAdmin) menuAdmin.style.display = 'none';
+            if (menuAdmin) menuAdmin.style.display = 'block'; // Admin de RH agora vê a tela de Administração
             if (menuColaboradores) menuColaboradores.style.display = 'block';
             if (menuPortal) menuPortal.style.display = 'block';
             if (menuHolerites) menuHolerites.style.display = 'block';
-            window.carregarModulo('modulo2');
+            window.carregarModulo('modulo1'); // Carrega a tabela, mas o modulo1.js já bloqueia as edições indevidas
+
         } else {
-            // Master e Gerente
+            // Perfis de Alto Nível: Master, Gestor, Gerente
             if (menuAdmin) menuAdmin.style.display = 'block';
             if (menuColaboradores) menuColaboradores.style.display = 'block';
             if (menuPortal) menuPortal.style.display = 'block';
@@ -139,13 +150,9 @@ async function verificarPermissoesMenu() {
     }
 }
 
-
-
-
 document.addEventListener('contextmenu', function (e) {
     e.preventDefault();
 });
-
 
 document.addEventListener('DOMContentLoaded', () => {
     verificarPermissoesMenu();
