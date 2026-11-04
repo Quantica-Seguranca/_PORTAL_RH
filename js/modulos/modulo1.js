@@ -14,7 +14,6 @@ if (typeof window.modulo1Initialized === 'undefined') {
         'admin': 2, 'operador': 1, 'operacional': 1, 'colaborador': 0
     };
 
-    // 1. INJEÇÃO DE CSS (Incluindo estilos para o Modal de Histórico)
     function injetarCSSMobile() {
         if (document.getElementById('css-mobile-modulo1')) return;
         const style = document.createElement('style');
@@ -22,9 +21,8 @@ if (typeof window.modulo1Initialized === 'undefined') {
         style.innerHTML = `
             .table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; width: 100%; }
             .table-wrapper table { min-width: 650px; }
-            .acoes-tabela { display: flex; gap: 0.5rem; justify-content: center; align-items: center; }
+            .acoes-tabela { display: flex; gap: 0.5rem; justify-content: center; align-items: center; flex-wrap: wrap; }
 
-            /* Estilos do Modal de Histórico */
             .modal-historico-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: none; justify-content: center; align-items: center; z-index: 9999; }
             .modal-historico-content { background: var(--primary-900, #1a1a1a); border: 1px solid var(--accent-500, #f0a500); width: 90%; max-width: 800px; max-height: 85vh; border-radius: 8px; padding: 1.5rem; display: flex; flex-direction: column; }
             .modal-historico-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
@@ -41,7 +39,7 @@ if (typeof window.modulo1Initialized === 'undefined') {
                 .acoes-tabela { flex-direction: column; }
                 .acoes-tabela button { width: 100%; margin-left: 0 !important; }
                 #form-editar-privilegios > div:last-child { flex-direction: column; }
-                #form-editar-privilegios > div:last-child button { width: 100%; }
+                #form-editar-privilegios > div:last-child button { width: 100%; margin-bottom: 0.5rem; }
             }
         `;
         document.head.appendChild(style);
@@ -60,12 +58,50 @@ if (typeof window.modulo1Initialized === 'undefined') {
 
     function formatDate(isoString) {
         if (!isoString) return '-';
-        return new Date(isoString).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', dateStyle: 'short', timeStyle: 'medium' });
+        return new Date(isoString).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', dateStyle: 'short', timeStyle: 'short' });
+    }
+
+    // NOVA FUNÇÃO: Trilha de Auditoria (Grava quem fez o quê)
+    async function registrarAuditoria(emailAlvo, acao, detalhes) {
+        try {
+            const { data: { session } } = await window.supabaseClient.auth.getSession();
+            const autor = session ? session.user.email : 'Sistema';
+            await window.supabaseClient.from('historico_acessos').insert([{
+                usuario_email: emailAlvo,
+                acao: acao,
+                detalhes: `${detalhes} (Autor da ação: ${autor})`
+            }]);
+        } catch (e) { console.error('Erro de auditoria:', e); }
+    }
+
+    // NOVA FUNÇÃO: Exportar Tabela para Planilha CSV
+    function exportarRelatorioCSV() {
+        if (stateModulo1.users.length === 0) return alert('Nenhum dado para exportar.');
+        
+        let csvContent = "Nome Completo,E-mail,Cargo,Perfil,Status,Matricula,Data de Cadastro\n";
+        
+        stateModulo1.users.forEach(u => {
+            const nome = (u.nome_completo || '').replace(/,/g, ''); // Remove vírgulas para não quebrar o CSV
+            const cargo = (u.cargo || '').replace(/,/g, '');
+            const dataCad = formatDate(u.criado_em).replace(/,/g, ' ');
+            csvContent += `"${nome}","${u.email}","${cargo}","${u.perfil}","${u.status}","${u.matricula || ''}","${dataCad}"\n`;
+        });
+
+        const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' }); // \uFEFF força o Excel a ler acentos em UTF-8
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.setAttribute("href", url);
+        link.setAttribute("download", `Relatorio_Efetivo_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        registrarAuditoria('Geral', 'Exportação de Dados', 'Baixou o relatório geral de efetivo.');
     }
 
     async function loadModulo1Data() {
         try { await Promise.allSettled([loadStatistics(), loadUsers(), loadPreCadastros()]); } 
-        catch (e) { console.error('Erro no carregamento do Módulo 1:', e); }
+        catch (e) { console.error('Erro no carregamento:', e); }
     }
 
     async function loadStatistics() {
@@ -125,10 +161,10 @@ if (typeof window.modulo1Initialized === 'undefined') {
         const totalPages = Math.ceil(total / limit) || 1;
 
         paginationContainer.innerHTML = `
-            <span>Mostrando página <strong>${page}</strong> de <strong>${totalPages}</strong> (Total: ${total} registos)</span>
+            <span>Página <strong>${page}</strong> de <strong>${totalPages}</strong> (${total} registos)</span>
             <div style="display: flex; gap: 0.5rem;">
-                <button id="btn-prev-page" class="btn btn-sm btn-secondary" ${page <= 1 ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''}>Anterior</button>
-                <button id="btn-next-page" class="btn btn-sm btn-secondary" ${page >= totalPages ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''}>Próxima</button>
+                <button id="btn-prev-page" class="btn btn-sm btn-secondary" ${page <= 1 ? 'disabled style="opacity: 0.5;"' : ''}>Anterior</button>
+                <button id="btn-next-page" class="btn btn-sm btn-secondary" ${page >= totalPages ? 'disabled style="opacity: 0.5;"' : ''}>Próxima</button>
             </div>
         `;
 
@@ -160,7 +196,7 @@ if (typeof window.modulo1Initialized === 'undefined') {
                     <td style="padding: 0.75rem;">
                         <div class="acoes-tabela">
                             <button class="btn btn-sm btn-aprovar" data-id="${pre.id}" data-email="${pre.email}" data-nome="${pre.nome}" data-senha="${pre.senha_temporaria || '123456'}" style="background: var(--success-600); color: white; border: none; padding: 0.3rem 0.75rem; border-radius: 4px; cursor: pointer;">Aprovar</button>
-                            <button class="btn btn-sm btn-rejeitar" data-id="${pre.id}" style="background: var(--danger-600); color: white; border: none; padding: 0.3rem 0.75rem; border-radius: 4px; cursor: pointer;">Rejeitar</button>
+                            <button class="btn btn-sm btn-rejeitar" data-id="${pre.id}" data-email="${pre.email}" style="background: var(--danger-600); color: white; border: none; padding: 0.3rem 0.75rem; border-radius: 4px; cursor: pointer;">Rejeitar</button>
                         </div>
                     </td>
                 `;
@@ -175,7 +211,6 @@ if (typeof window.modulo1Initialized === 'undefined') {
             btn.addEventListener('click', async (e) => {
                 const { id, email, nome, senha } = e.target.dataset;
                 const { error: authError } = await window.supabaseClient.auth.signUp({ email, password: senha });
-                
                 if (authError && !authError.message.includes('already registered')) return alert('Erro Auth: ' + authError.message);
 
                 const { error: insertError } = await window.supabaseClient.from('colaboradores').insert([{
@@ -185,6 +220,10 @@ if (typeof window.modulo1Initialized === 'undefined') {
 
                 if (insertError) return alert('Erro ao aprovar: ' + insertError.message);
                 await window.supabaseClient.from('pre_cadastros').update({ status: 'aprovado' }).eq('id', id);
+                
+                // Grava a auditoria da aprovação
+                await registrarAuditoria(email, 'Pré-Cadastro Aprovado', 'Credencial gerada e acesso autorizado.');
+                
                 alert('Aprovado com sucesso!');
                 loadModulo1Data();
             });
@@ -193,7 +232,9 @@ if (typeof window.modulo1Initialized === 'undefined') {
         document.querySelectorAll('.btn-rejeitar').forEach(btn => {
             btn.addEventListener('click', async (e) => {
                 if (!confirm('Rejeitar solicitação?')) return;
-                await window.supabaseClient.from('pre_cadastros').update({ status: 'rejeitado' }).eq('id', e.target.dataset.id);
+                const { id, email } = e.target.dataset;
+                await window.supabaseClient.from('pre_cadastros').update({ status: 'rejeitado' }).eq('id', id);
+                await registrarAuditoria(email, 'Pré-Cadastro Rejeitado', 'Solicitação foi negada e descartada.');
                 loadPreCadastros();
             });
         });
@@ -214,8 +255,6 @@ if (typeof window.modulo1Initialized === 'undefined') {
         
         const podeConcederAcessos = temPermissaoCustom('gerir_acessos');
         const podeExcluir = temPermissaoCustom('excluir_usuarios');
-        
-        // NOVO: Apenas Master e Gestor podem ver o botão Histórico
         const podeVerHistorico = ['master', 'gestor'].includes(perfilLogado);
 
         stateModulo1.users.forEach((user) => {
@@ -268,12 +307,15 @@ if (typeof window.modulo1Initialized === 'undefined') {
                 if (!confirm(`Deseja realmente excluir ${usuarioParaExcluir.nome_completo}?`)) return;
 
                 await window.supabaseClient.from('colaboradores').delete().eq('id', id);
-                if (usuarioParaExcluir.email) await window.supabaseClient.from('pre_cadastros').delete().eq('email', usuarioParaExcluir.email);
+                if (usuarioParaExcluir.email) {
+                    await window.supabaseClient.from('pre_cadastros').delete().eq('email', usuarioParaExcluir.email);
+                    // Grava auditoria de exclusão
+                    await registrarAuditoria(usuarioParaExcluir.email, 'Usuário Excluído', 'Conta e perfil apagados do sistema.');
+                }
                 loadModulo1Data();
             });
         });
 
-        // Evento para o botão de Histórico
         document.querySelectorAll('.btn-historico').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 abrirModalHistorico(e.target.getAttribute('data-email'), e.target.getAttribute('data-nome'));
@@ -281,7 +323,6 @@ if (typeof window.modulo1Initialized === 'undefined') {
         });
     }
 
-    // --- LÓGICA DO MODAL DE HISTÓRICO ---
     async function abrirModalHistorico(email, nome) {
         let modal = document.getElementById('modal-historico');
         
@@ -293,19 +334,13 @@ if (typeof window.modulo1Initialized === 'undefined') {
                 <div class="modal-historico-content">
                     <div class="modal-historico-header">
                         <h3 class="text-white text-lg font-bold" style="color: var(--accent-500, #f0a500);">
-                            Histórico de Acessos: <span id="historico-nome-user" style="color: white;"></span>
+                            Histórico de Acessos e Ações: <span id="historico-nome-user" style="color: white;"></span>
                         </h3>
                         <button id="btn-fechar-historico" style="background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer;">&times;</button>
                     </div>
                     <div class="modal-historico-body">
                         <table>
-                            <thead>
-                                <tr>
-                                    <th>Data e Hora</th>
-                                    <th>Ação</th>
-                                    <th>Detalhes</th>
-                                </tr>
-                            </thead>
+                            <thead><tr><th>Data e Hora</th><th>Ação</th><th>Detalhes</th></tr></thead>
                             <tbody id="tabela-historico-body">
                                 <tr><td colspan="3" style="text-align: center;">Carregando histórico...</td></tr>
                             </tbody>
@@ -314,35 +349,18 @@ if (typeof window.modulo1Initialized === 'undefined') {
                 </div>
             `;
             document.body.appendChild(modal);
-
-            document.getElementById('btn-fechar-historico').addEventListener('click', () => {
-                modal.style.display = 'none';
-            });
+            document.getElementById('btn-fechar-historico').addEventListener('click', () => modal.style.display = 'none');
         }
 
         document.getElementById('historico-nome-user').textContent = nome || email;
         const tbody = document.getElementById('tabela-historico-body');
         tbody.innerHTML = '<tr><td colspan="3" style="text-align: center;">Buscando registros...</td></tr>';
-        
-        modal.style.display = 'flex'; // Mostra o modal
+        modal.style.display = 'flex'; 
 
-        // Busca os dados na nova tabela historico_acessos
-        const { data, error } = await window.supabaseClient
-            .from('historico_acessos')
-            .select('*')
-            .eq('usuario_email', email)
-            .order('criado_em', { ascending: false })
-            .limit(50); // Mostra os últimos 50 registros
+        const { data, error } = await window.supabaseClient.from('historico_acessos').select('*').eq('usuario_email', email).order('criado_em', { ascending: false }).limit(100);
 
-        if (error) {
-            tbody.innerHTML = `<tr><td colspan="3" style="color: var(--danger-600); text-align: center;">Erro ao buscar histórico.</td></tr>`;
-            return;
-        }
-
-        if (!data || data.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="3" style="text-align: center; color: #888;">Nenhum registro de acesso encontrado.</td></tr>`;
-            return;
-        }
+        if (error) return tbody.innerHTML = `<tr><td colspan="3" style="color: var(--danger-600); text-align: center;">Erro ao buscar histórico.</td></tr>`;
+        if (!data || data.length === 0) return tbody.innerHTML = `<tr><td colspan="3" style="text-align: center; color: #888;">Nenhum registro encontrado.</td></tr>`;
 
         tbody.innerHTML = '';
         data.forEach(log => {
@@ -355,7 +373,6 @@ if (typeof window.modulo1Initialized === 'undefined') {
             tbody.appendChild(tr);
         });
     }
-    // --- FIM DA LÓGICA DO MODAL ---
 
     function abrirPainelEdicao(id) {
         const user = stateModulo1.users.find(u => u.id === id);
@@ -394,7 +411,11 @@ if (typeof window.modulo1Initialized === 'undefined') {
         `;
 
         painel.innerHTML = `
-            <h3 id="titulo-editar-usuario" class="text-white text-lg font-bold" style="margin-bottom: 1rem; color: var(--accent-500, #f0a500);">A editar: ${user.nome_completo || user.email}</h3>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h3 id="titulo-editar-usuario" class="text-white text-lg font-bold" style="color: var(--accent-500, #f0a500);">A editar: ${user.nome_completo || user.email}</h3>
+                <button type="button" id="btn-reset-senha" class="btn btn-sm" style="background: var(--warning-600, #ffc107); color: black; font-weight: bold; border: none; padding: 0.4rem 0.8rem; border-radius: 4px; cursor: pointer;" title="O colaborador receberá um e-mail com instruções">🔑 Enviar Link de Recuperação de Senha</button>
+            </div>
+            
             <form id="form-editar-privilegios">
                 <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                     <div>
@@ -440,13 +461,27 @@ if (typeof window.modulo1Initialized === 'undefined') {
             </form>
         `;
 
+        // Evento para o Reset de Senha
+        getEl('btn-reset-senha').onclick = async () => {
+            if(!confirm(`Isto enviará um e-mail de redefinição de senha para ${user.email}. Deseja prosseguir?`)) return;
+            const { error } = await window.supabaseClient.auth.resetPasswordForEmail(user.email);
+            if(error) {
+                alert('Erro ao enviar link: ' + error.message);
+            } else {
+                alert('E-mail de recuperação enviado com sucesso para o colaborador!');
+                await registrarAuditoria(user.email, 'Redefinição de Senha', 'Link de recuperação enviado pelo painel de gestão.');
+            }
+        };
+
         getEl('form-editar-privilegios').onsubmit = async (e) => {
             e.preventDefault();
             if (!stateModulo1.selectedUserId) return;
+            
+            const novoPerfil = getEl('edit-perfil').value;
             const payload = { nome_completo: getEl('edit-nome').value.trim(), cargo: getEl('edit-cargo').value.trim(), status: getEl('edit-status').value };
 
             if (podeConcederAcessos) {
-                payload.perfil = getEl('edit-perfil').value;
+                payload.perfil = novoPerfil;
                 payload.permissoes = {
                     ver_admin: getEl('chk-ver-admin').checked,
                     gerir_acessos: getEl('chk-gerir-acessos').checked,
@@ -455,8 +490,13 @@ if (typeof window.modulo1Initialized === 'undefined') {
             }
 
             const { error } = await window.supabaseClient.from('colaboradores').update(payload).eq('id', stateModulo1.selectedUserId);
-            if (error) alert('Erro ao atualizar dados: ' + error.message);
-            else { alert('Atualizado com sucesso!'); getEl('painel-edicao-usuario').style.display = 'none'; loadModulo1Data(); }
+            if (error) alert('Erro ao atualizar: ' + error.message);
+            else { 
+                await registrarAuditoria(user.email, 'Atualização de Cadastro', `Cargo/Status/Permissões atualizados. Novo perfil principal: ${novoPerfil}`);
+                alert('Atualizado com sucesso!'); 
+                getEl('painel-edicao-usuario').style.display = 'none'; 
+                loadModulo1Data(); 
+            }
         };
 
         getEl('btn-cancelar-edicao').onclick = () => getEl('painel-edicao-usuario').style.display = 'none';
@@ -468,6 +508,17 @@ if (typeof window.modulo1Initialized === 'undefined') {
         const btnNewUser = getEl('btn-new-user');
         const modalCreate = getEl('modal-create-user');
         
+        // Injeta o botão de Exportação de forma dinâmica ao lado do botão Novo Usuário
+        if (btnNewUser && !getEl('btn-export-csv')) {
+            const btnExport = document.createElement('button');
+            btnExport.id = 'btn-export-csv';
+            btnExport.className = 'btn btn-primary';
+            btnExport.style.cssText = 'background: var(--info-600, #17a2b8); margin-left: 10px; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer;';
+            btnExport.innerHTML = '📥 Exportar Efetivo';
+            btnExport.onclick = exportarRelatorioCSV;
+            btnNewUser.parentNode.insertBefore(btnExport, btnNewUser.nextSibling);
+        }
+
         if (btnNewUser) {
             if (temPermissaoCustom('gerir_acessos')) btnNewUser.addEventListener('click', () => { if (modalCreate) modalCreate.style.display = 'flex'; });
             else btnNewUser.style.display = 'none';
@@ -491,7 +542,10 @@ if (typeof window.modulo1Initialized === 'undefined') {
                 }]);
 
                 if (error) alert('Erro ao cadastrar usuário.');
-                else { modalCreate.style.display = 'none'; e.target.reset(); loadModulo1Data(); }
+                else { 
+                    await registrarAuditoria(email, 'Cadastro Manual', 'Usuário adicionado diretamente pela administração.');
+                    modalCreate.style.display = 'none'; e.target.reset(); loadModulo1Data(); 
+                }
             });
         }
         if (getEl('search-users')) getEl('search-users').addEventListener('input', (e) => { stateModulo1.pagination.search = e.target.value.trim(); stateModulo1.pagination.page = 1; loadUsers(); });
