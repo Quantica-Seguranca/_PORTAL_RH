@@ -14,11 +14,47 @@ if (typeof window.modulo1Initialized === 'undefined') {
         'admin': 2, 'operador': 1, 'operacional': 1, 'colaborador': 0
     };
 
+    // 1. INJEÇÃO DE CSS PARA RESPONSIVIDADE MOBILE
+    function injetarCSSMobile() {
+        if (document.getElementById('css-mobile-modulo1')) return;
+        const style = document.createElement('style');
+        style.id = 'css-mobile-modulo1';
+        style.innerHTML = `
+            /* Proteção da Tabela */
+            .table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; width: 100%; }
+            .table-wrapper table { min-width: 650px; } /* Evita que o texto esprema */
+            
+            /* Container Flex para Botões da Tabela */
+            .acoes-tabela { display: flex; gap: 0.5rem; justify-content: center; align-items: center; }
+
+            /* Adaptações para Ecrãs Pequenos (Telemóveis) */
+            @media (max-width: 768px) {
+                #painel-edicao-usuario { padding: 1rem !important; }
+                
+                /* Passa o formulário de 2 para 1 coluna */
+                #form-editar-privilegios .form-row { grid-template-columns: 1fr !important; gap: 0 !important; }
+                #form-editar-privilegios .form-row > div { margin-bottom: 0.75rem; }
+                
+                /* Empilha a paginação e centra */
+                #pagination-container { flex-direction: column; text-align: center; gap: 1rem; }
+                #pagination-container > div { width: 100%; justify-content: center; }
+                
+                /* Empilha os botões de ação na tabela para facilitar o toque */
+                .acoes-tabela { flex-direction: column; }
+                .acoes-tabela button { width: 100%; margin-left: 0 !important; }
+                
+                /* Ajuste dos botões Salvar/Cancelar */
+                #form-editar-privilegios > div:last-child { flex-direction: column; }
+                #form-editar-privilegios > div:last-child button { width: 100%; }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+
     function obterPerfilLogado() {
         return (window.userPerfil || localStorage.getItem('user_role') || 'colaborador').toLowerCase();
     }
 
-    // Função que avalia o poder nativo e as checkboxes do usuário logado
     function temPermissaoCustom(acao) {
         if (obterPerfilLogado() === 'master' || obterPerfilLogado() === 'gestor') return true;
         return window.userPermissoes && window.userPermissoes[acao] === true;
@@ -66,13 +102,8 @@ if (typeof window.modulo1Initialized === 'undefined') {
 
             let query = window.supabaseClient.from('colaboradores').select('*', { count: 'exact' }).order('nome_completo', { ascending: true });
             
-            if (perfilLogado !== 'master') {
-                query = query.neq('perfil', 'master');
-            }
-
-            if (search) {
-                query = query.or(`nome_completo.ilike.%${search}%,email.ilike.%${search}%`);
-            }
+            if (perfilLogado !== 'master') query = query.neq('perfil', 'master');
+            if (search) query = query.or(`nome_completo.ilike.%${search}%,email.ilike.%${search}%`);
 
             const { data, error, count } = await query.range(start, end);
             if (error) return;
@@ -95,7 +126,11 @@ if (typeof window.modulo1Initialized === 'undefined') {
             paginationContainer.id = 'pagination-container';
             paginationContainer.style.cssText = 'display: flex; justify-content: space-between; align-items: center; padding: 1rem; color: var(--primary-300, #ccc); font-size: 0.875rem;';
             const wrapper = containerTabela.closest('.table-wrapper') || containerTabela.parentElement;
-            if (wrapper) wrapper.after(paginationContainer);
+            if (wrapper) {
+                // Assegura que o wrapper tem a classe para aplicar o scroll no mobile
+                wrapper.classList.add('table-wrapper');
+                wrapper.after(paginationContainer);
+            }
         }
 
         const { page, limit, total } = stateModulo1.pagination;
@@ -134,9 +169,11 @@ if (typeof window.modulo1Initialized === 'undefined') {
                     <td style="padding: 0.75rem;">${pre.email || '-'}</td>
                     <td style="padding: 0.75rem;">${pre.cpf || '-'}</td>
                     <td style="padding: 0.75rem;">${formatDate(pre.criado_em)}</td>
-                    <td style="padding: 0.75rem; text-align: center;">
-                        <button class="btn btn-sm btn-aprovar" data-id="${pre.id}" data-email="${pre.email}" data-nome="${pre.nome}" data-senha="${pre.senha_temporaria || '123456'}" style="margin-right: 0.5rem; background: var(--success-600); color: white; border: none; padding: 0.25rem 0.5rem; border-radius: 4px; cursor: pointer;">Aprovar</button>
-                        <button class="btn btn-sm btn-rejeitar" data-id="${pre.id}" style="background: var(--danger-600); color: white; border: none; padding: 0.25rem 0.5rem; border-radius: 4px; cursor: pointer;">Rejeitar</button>
+                    <td style="padding: 0.75rem;">
+                        <div class="acoes-tabela">
+                            <button class="btn btn-sm btn-aprovar" data-id="${pre.id}" data-email="${pre.email}" data-nome="${pre.nome}" data-senha="${pre.senha_temporaria || '123456'}" style="background: var(--success-600); color: white; border: none; padding: 0.3rem 0.75rem; border-radius: 4px; cursor: pointer;">Aprovar</button>
+                            <button class="btn btn-sm btn-rejeitar" data-id="${pre.id}" style="background: var(--danger-600); color: white; border: none; padding: 0.3rem 0.75rem; border-radius: 4px; cursor: pointer;">Rejeitar</button>
+                        </div>
                     </td>
                 `;
                 tbody.appendChild(tr);
@@ -156,11 +193,7 @@ if (typeof window.modulo1Initialized === 'undefined') {
                 }
 
                 const { error: insertError } = await window.supabaseClient.from('colaboradores').insert([{
-                    nome_completo: nome, 
-                    email: email, 
-                    perfil: 'colaborador', 
-                    matricula: 'MAT-' + Math.floor(Math.random() * 9000 + 1000), 
-                    status: 'Ativo',
+                    nome_completo: nome, email: email, perfil: 'colaborador', matricula: 'MAT-' + Math.floor(Math.random() * 9000 + 1000), status: 'Ativo',
                     permissoes: { ver_admin: false, gerir_acessos: false, excluir_usuarios: false }
                 }]);
 
@@ -193,7 +226,6 @@ if (typeof window.modulo1Initialized === 'undefined') {
         const perfilLogado = obterPerfilLogado();
         const nivelLogado = HIERARQUIA[perfilLogado] || 0;
         
-        // Avaliação dinâmica de botões baseada em cargo ou checklist customizado
         const podeConcederAcessos = temPermissaoCustom('gerir_acessos');
         const podeExcluir = temPermissaoCustom('excluir_usuarios');
 
@@ -210,16 +242,21 @@ if (typeof window.modulo1Initialized === 'undefined') {
                 : `<button class="btn btn-sm btn-gerir" data-id="${user.id}" style="background: var(--primary-700, #555); color: #bbb; padding: 0.3rem 0.75rem; border: none; border-radius: 4px; cursor: pointer;">Editar Info</button>`;
 
             let botaoExcluir = (podeExcluir && nivelLogado >= nivelAlvo)
-                ? `<button class="btn btn-sm btn-excluir" data-id="${user.id}" style="background-color: var(--danger-600, #dc3545); color: white; padding: 0.3rem 0.75rem; border: none; border-radius: 4px; cursor: pointer; margin-left: 0.5rem;">Excluir</button>`
-                : `<button class="btn btn-sm" disabled style="background-color: #333; color: #777; padding: 0.3rem 0.75rem; border: none; border-radius: 4px; cursor: not-allowed; margin-left: 0.5rem;">Bloqueado</button>`;
+                ? `<button class="btn btn-sm btn-excluir" data-id="${user.id}" style="background-color: var(--danger-600, #dc3545); color: white; padding: 0.3rem 0.75rem; border: none; border-radius: 4px; cursor: pointer;">Excluir</button>`
+                : `<button class="btn btn-sm" disabled style="background-color: #333; color: #777; padding: 0.3rem 0.75rem; border: none; border-radius: 4px; cursor: not-allowed;">Bloqueado</button>`;
 
             tr.innerHTML = `
                 <td style="padding: 0.75rem;">${user.nome_completo || 'Não informado'}</td>
                 <td style="padding: 0.75rem;">${user.email || '-'}</td>
-                <td style="padding: 0.75rem;"><span class="badge" style="background: var(--primary-700, #444); color: white; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem; text-transform: uppercase;">${perfilAtual}</span></td>
-                <td style="padding: 0.75rem;"><span style="padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem; background: ${statusAtual.toLowerCase() === 'bloqueado' ? 'var(--danger-600)' : 'var(--success-600)'}; color: white;">${statusAtual}</span></td>
-                <td style="padding: 0.75rem;">${formatDate(user.criado_em)}</td>
-                <td style="padding: 0.75rem; text-align: center;">${botaoGerir}${botaoExcluir}</td>
+                <td style="padding: 0.75rem;"><span class="badge" style="background: var(--primary-700, #444); color: white; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem; text-transform: uppercase; white-space: nowrap;">${perfilAtual}</span></td>
+                <td style="padding: 0.75rem;"><span style="padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem; background: ${statusAtual.toLowerCase() === 'bloqueado' ? 'var(--danger-600)' : 'var(--success-600)'}; color: white; white-space: nowrap;">${statusAtual}</span></td>
+                <td style="padding: 0.75rem; white-space: nowrap;">${formatDate(user.criado_em)}</td>
+                <td style="padding: 0.75rem;">
+                    <div class="acoes-tabela">
+                        ${botaoGerir}
+                        ${botaoExcluir}
+                    </div>
+                </td>
             `;
             tbody.appendChild(tr);
         });
@@ -267,23 +304,22 @@ if (typeof window.modulo1Initialized === 'undefined') {
             painel.style.display = 'block';
         }
 
-        // Checklist Customizado de Autorizações Extras
         const painelPermissoes = `
             <div style="margin-bottom: 1.5rem; background: var(--primary-800, #222); padding: 1rem; border-radius: 4px; border-left: 3px solid var(--accent-500, #f0a500);">
                 <label style="display:block; font-size:0.85rem; color:var(--accent-500, #f0a500); margin-bottom:0.75rem; font-weight: bold; text-transform: uppercase;">Autorizações Personalizadas (Exceções)</label>
                 
                 <label style="display:flex; align-items:center; gap:0.5rem; color:white; margin-bottom:0.5rem; font-size: 0.85rem; cursor: pointer;">
-                    <input type="checkbox" id="chk-ver-admin" style="width: 16px; height: 16px;" ${user.permissoes?.ver_admin ? 'checked' : ''} ${!podeConcederAcessos ? 'disabled' : ''}>
+                    <input type="checkbox" id="chk-ver-admin" style="width: 16px; height: 16px; min-width: 16px;" ${user.permissoes?.ver_admin ? 'checked' : ''} ${!podeConcederAcessos ? 'disabled' : ''}>
                     Liberar acesso e visualização ao menu "1. Administração"
                 </label>
                 
                 <label style="display:flex; align-items:center; gap:0.5rem; color:white; margin-bottom:0.5rem; font-size: 0.85rem; cursor: pointer;">
-                    <input type="checkbox" id="chk-gerir-acessos" style="width: 16px; height: 16px;" ${user.permissoes?.gerir_acessos ? 'checked' : ''} ${!podeConcederAcessos ? 'disabled' : ''}>
+                    <input type="checkbox" id="chk-gerir-acessos" style="width: 16px; height: 16px; min-width: 16px;" ${user.permissoes?.gerir_acessos ? 'checked' : ''} ${!podeConcederAcessos ? 'disabled' : ''}>
                     Permitir alterar cargos e dar autorizações a outros utilizadores
                 </label>
                 
                 <label style="display:flex; align-items:center; gap:0.5rem; color:white; font-size: 0.85rem; cursor: pointer;">
-                    <input type="checkbox" id="chk-excluir" style="width: 16px; height: 16px;" ${user.permissoes?.excluir_usuarios ? 'checked' : ''} ${!podeConcederAcessos ? 'disabled' : ''}>
+                    <input type="checkbox" id="chk-excluir" style="width: 16px; height: 16px; min-width: 16px;" ${user.permissoes?.excluir_usuarios ? 'checked' : ''} ${!podeConcederAcessos ? 'disabled' : ''}>
                     Permitir exclusão de contas do sistema
                 </label>
             </div>
@@ -295,21 +331,21 @@ if (typeof window.modulo1Initialized === 'undefined') {
                 <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                     <div>
                         <label style="display:block; font-size:0.8rem; color:var(--primary-400, #ccc); margin-bottom:0.25rem;">E-mail da Conta (Leitura)</label>
-                        <input type="email" id="edit-email" class="form-input" readonly value="${user.email || ''}" style="background: var(--primary-800, #222); color: var(--primary-400, #aaa); width: 100%; padding: 0.5rem; border: 1px solid var(--primary-700, #444); border-radius: 4px;">
+                        <input type="email" id="edit-email" class="form-input" readonly value="${user.email || ''}" style="background: var(--primary-800, #222); color: var(--primary-400, #aaa); width: 100%; padding: 0.5rem; border: 1px solid var(--primary-700, #444); border-radius: 4px; box-sizing: border-box;">
                     </div>
                     <div>
                         <label style="display:block; font-size:0.8rem; color:var(--primary-400, #ccc); margin-bottom:0.25rem;">Nome do Colaborador</label>
-                        <input type="text" id="edit-nome" class="form-input" value="${user.nome_completo || ''}" style="width: 100%; padding: 0.5rem; background: var(--primary-700, #333); color: white; border: 1px solid var(--primary-600, #555); border-radius: 4px;">
+                        <input type="text" id="edit-nome" class="form-input" value="${user.nome_completo || ''}" style="width: 100%; padding: 0.5rem; background: var(--primary-700, #333); color: white; border: 1px solid var(--primary-600, #555); border-radius: 4px; box-sizing: border-box;">
                     </div>
                 </div>
                 <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                     <div>
                         <label style="display:block; font-size:0.8rem; color:var(--primary-400, #ccc); margin-bottom:0.25rem;">Cargo / Função</label>
-                        <input type="text" id="edit-cargo" class="form-input" value="${user.cargo || ''}" style="width: 100%; padding: 0.5rem; background: var(--primary-700, #333); color: white; border: 1px solid var(--primary-600, #555); border-radius: 4px;">
+                        <input type="text" id="edit-cargo" class="form-input" value="${user.cargo || ''}" style="width: 100%; padding: 0.5rem; background: var(--primary-700, #333); color: white; border: 1px solid var(--primary-600, #555); border-radius: 4px; box-sizing: border-box;">
                     </div>
                     <div>
                         <label style="display:block; font-size:0.8rem; color:var(--primary-400, #ccc); margin-bottom:0.25rem;">Nível Corporativo (Role)</label>
-                        <select id="edit-perfil" class="form-input" style="width: 100%; padding: 0.5rem; background: var(--primary-700, #333); color: white; border: 1px solid var(--primary-600, #555); border-radius: 4px;" ${!podeConcederAcessos ? 'disabled' : ''}>
+                        <select id="edit-perfil" class="form-input" style="width: 100%; padding: 0.5rem; background: var(--primary-700, #333); color: white; border: 1px solid var(--primary-600, #555); border-radius: 4px; box-sizing: border-box;" ${!podeConcederAcessos ? 'disabled' : ''}>
                             <option value="colaborador" ${user.perfil === 'colaborador' ? 'selected' : ''}>Colaborador</option>
                             <option value="operador" ${user.perfil === 'operador' ? 'selected' : ''}>Operador</option>
                             <option value="admin" ${user.perfil === 'admin' ? 'selected' : ''}>Administrador (RH)</option>
@@ -321,7 +357,7 @@ if (typeof window.modulo1Initialized === 'undefined') {
                 </div>
                 <div style="margin-bottom: 1rem;">
                     <label style="display:block; font-size:0.8rem; color:var(--primary-400, #ccc); margin-bottom:0.25rem;">Status da Conta</label>
-                    <select id="edit-status" class="form-input" style="width: 100%; padding: 0.5rem; background: var(--primary-700, #333); color: white; border: 1px solid var(--primary-600, #555); border-radius: 4px;">
+                    <select id="edit-status" class="form-input" style="width: 100%; padding: 0.5rem; background: var(--primary-700, #333); color: white; border: 1px solid var(--primary-600, #555); border-radius: 4px; box-sizing: border-box;">
                         <option value="Ativo" ${user.status === 'Ativo' ? 'selected' : ''}>Ativo</option>
                         <option value="Bloqueado" ${user.status === 'Bloqueado' ? 'selected' : ''}>Bloqueado (Acesso Suspenso)</option>
                     </select>
@@ -346,7 +382,6 @@ if (typeof window.modulo1Initialized === 'undefined') {
                 status: getEl('edit-status').value
             };
 
-            // Salva role e permissoes customizadas apenas se tiver autorização
             if (podeConcederAcessos) {
                 payload.perfil = getEl('edit-perfil').value;
                 payload.permissoes = {
@@ -375,6 +410,8 @@ if (typeof window.modulo1Initialized === 'undefined') {
     }
 
     function initModulo1() {
+        injetarCSSMobile(); // Ativa os estilos mobile
+        
         const btnNewUser = getEl('btn-new-user');
         const modalCreate = getEl('modal-create-user');
         
@@ -401,23 +438,19 @@ if (typeof window.modulo1Initialized === 'undefined') {
                 const password = formData.get('password');
                 const perfil = formData.get('perfil') || 'colaborador';
 
-                const { error: authError } = await window.supabaseClient.auth.signUp({
-                    email: email, password: password
-                });
+                const { error: authError } = await window.supabaseClient.auth.signUp({ email, password });
 
                 if (authError && !authError.message.includes('already registered')) {
                     alert('Erro ao criar autenticação: ' + authError.message);
                     return;
                 }
 
-                const { error } = await window.supabaseClient
-                    .from('colaboradores')
-                    .insert([{ 
-                        nome_completo, email, perfil, 
-                        matricula: 'MAT-' + Math.floor(Math.random() * 9000 + 1000), 
-                        status: 'Ativo',
-                        permissoes: { ver_admin: false, gerir_acessos: false, excluir_usuarios: false }
-                    }]);
+                const { error } = await window.supabaseClient.from('colaboradores').insert([{ 
+                    nome_completo, email, perfil, 
+                    matricula: 'MAT-' + Math.floor(Math.random() * 9000 + 1000), 
+                    status: 'Ativo',
+                    permissoes: { ver_admin: false, gerir_acessos: false, excluir_usuarios: false }
+                }]);
 
                 if (error) {
                     alert('Erro ao cadastrar usuário na base.');
