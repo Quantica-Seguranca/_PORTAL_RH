@@ -1,10 +1,9 @@
-// Dicionário com os módulos e os perfis permitidos para acesso
+// Dicionário com os módulos e os perfis permitidos (Apenas Master e Gestor têm acesso nativo à Administração)
 const rotas = {
     'modulo1': { 
         html: 'modulos/modulo1.html', 
         js: 'js/modulos/modulo1.js', 
-        // Permitido para quem pode gerenciar ou ver usuários
-        perfisPermitidos: ['master', 'gestor', 'gerente', 'admin'] 
+        perfisPermitidos: ['master', 'gestor'] // Apenas perfis de topo. Exceções são tratadas pelas checkboxes.
     },
     'modulo2': { 
         html: 'modulos/modulo2.html', 
@@ -45,8 +44,15 @@ window.carregarModulo = async function(nomeModulo) {
     }
 
     const perfilUsuario = window.userPerfil || localStorage.getItem('user_role') || 'colaborador';
+    const permissoes = window.userPermissoes || {};
 
-    if (!rota.perfisPermitidos.includes(perfilUsuario)) {
+    // Verifica se tem acesso pelo cargo nativo OU pela permissão customizada (checkbox)
+    let temAcesso = rota.perfisPermitidos.includes(perfilUsuario);
+    if (nomeModulo === 'modulo1' && permissoes.ver_admin === true) {
+        temAcesso = true;
+    }
+
+    if (!temAcesso) {
         alert("Acesso negado. Seu nível de privilégio não permite acessar esta área.");
         return;
     }
@@ -91,20 +97,22 @@ async function verificarPermissoesMenu() {
         const { data: { session } } = await window.supabaseClient.auth.getSession();
         if (!session) return;
 
+        // Busca o perfil E as permissões customizadas (JSONB) do banco
         const { data: colaborador } = await window.supabaseClient
             .from('colaboradores')
-            .select('perfil')
+            .select('perfil, permissoes')
             .eq('email', session.user.email)
             .single();
 
         window.userPerfil = colaborador && colaborador.perfil ? colaborador.perfil.toLowerCase() : 'colaborador';
+        window.userPermissoes = colaborador && colaborador.permissoes ? colaborador.permissoes : { ver_admin: false, gerir_acessos: false, excluir_usuarios: false };
         
-        // Garante que a role no localStorage também esteja sincronizada
-        localStorage.setItem('user_role', window.userPerfil);
+        // Garante a hierarquia máxima e todas as checkboxes para o Comando Master
         if (session.user.email === 'sentinela.command@gmail.com') {
             window.userPerfil = 'master';
-            localStorage.setItem('user_role', 'master');
+            window.userPermissoes = { ver_admin: true, gerir_acessos: true, excluir_usuarios: true };
         }
+        localStorage.setItem('user_role', window.userPerfil);
 
         const menuAdmin = document.getElementById('menu-admin');
         const menuColaboradores = document.getElementById('menu-colaboradores');
@@ -116,35 +124,25 @@ async function verificarPermissoesMenu() {
         if (menuInformativos) menuInformativos.style.display = 'block';
         if (menuMensagens) menuMensagens.style.display = 'block';
 
-        if (window.userPerfil === 'colaborador') {
-            if (menuAdmin) menuAdmin.style.display = 'none';
-            if (menuColaboradores) menuColaboradores.style.display = 'none';
-            if (menuPortal) menuPortal.style.display = 'block';
-            if (menuHolerites) menuHolerites.style.display = 'none';
-            window.carregarModulo('modulo3');
+        // Regra para exibir o botão "1. Administração": ser Master/Gestor OU ter checkbox autorizando
+        const podeVerAdmin = ['master', 'gestor'].includes(window.userPerfil) || window.userPermissoes.ver_admin === true;
 
-        } else if (window.userPerfil === 'operador' || window.userPerfil === 'operacional') {
-            if (menuAdmin) menuAdmin.style.display = 'none';
-            if (menuColaboradores) menuColaboradores.style.display = 'block';
-            if (menuPortal) menuPortal.style.display = 'block';
-            if (menuHolerites) menuHolerites.style.display = 'none';
-            window.carregarModulo('modulo2');
+        if (menuAdmin) menuAdmin.style.display = podeVerAdmin ? 'block' : 'none';
+        
+        // Define as exibições dos demais menus
+        if (menuColaboradores) menuColaboradores.style.display = window.userPerfil === 'colaborador' ? 'none' : 'block';
+        if (menuPortal) menuPortal.style.display = 'block';
+        if (menuHolerites) menuHolerites.style.display = ['master', 'gestor', 'gerente', 'admin'].includes(window.userPerfil) ? 'block' : 'none';
 
-        } else if (window.userPerfil === 'admin') {
-            if (menuAdmin) menuAdmin.style.display = 'block'; // Admin de RH agora vê a tela de Administração
-            if (menuColaboradores) menuColaboradores.style.display = 'block';
-            if (menuPortal) menuPortal.style.display = 'block';
-            if (menuHolerites) menuHolerites.style.display = 'block';
-            window.carregarModulo('modulo1'); // Carrega a tabela, mas o modulo1.js já bloqueia as edições indevidas
-
-        } else {
-            // Perfis de Alto Nível: Master, Gestor, Gerente
-            if (menuAdmin) menuAdmin.style.display = 'block';
-            if (menuColaboradores) menuColaboradores.style.display = 'block';
-            if (menuPortal) menuPortal.style.display = 'block';
-            if (menuHolerites) menuHolerites.style.display = 'block';
+        // Lógica de redirecionamento para a tela inicial assim que o usuário faz login
+        if (podeVerAdmin) {
             window.carregarModulo('modulo1');
+        } else if (['operador', 'operacional', 'admin', 'gerente'].includes(window.userPerfil)) {
+            window.carregarModulo('modulo2');
+        } else {
+            window.carregarModulo('modulo3');
         }
+
     } catch (e) {
         console.error("Erro ao carregar permissões do menu:", e);
     }
