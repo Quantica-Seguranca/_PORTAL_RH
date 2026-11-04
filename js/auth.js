@@ -54,7 +54,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 mensagemDiv.textContent = 'Login bem-sucedido! Carregando permissões...';
                 mensagemDiv.style.color = 'var(--success-600)';
 
-                // NOVA IMPLEMENTAÇÃO: Busca o perfil na tabela 'colaboradores' e salva no navegador
+                // Busca o perfil na tabela 'colaboradores' e salva no navegador
                 try {
                     const { data: userData, error: userError } = await window.supabaseClient
                         .from('colaboradores')
@@ -66,13 +66,27 @@ document.addEventListener('DOMContentLoaded', async () => {
                         localStorage.setItem('user_role', (userData.perfil || '').toLowerCase());
                         localStorage.setItem('user_name', userData.nome_completo || '');
                     } else {
-                        // Se o e-mail for o do Master direto, já força master, senão operador
+                        // Se o e-mail for o do Master direto, força master, senão operador
                         if (email === 'sentinela.command@gmail.com') {
                             localStorage.setItem('user_role', 'master');
                         } else {
                             localStorage.setItem('user_role', 'operador');
                         }
                     }
+
+                    // REGISTAR O LOGIN NO HISTÓRICO DE ACESSOS
+                    try {
+                        const userAgent = navigator.userAgent;
+                        const isMobile = /Mobi|Android/i.test(userAgent) ? 'Dispositivo Móvel' : 'Computador';
+                        await window.supabaseClient.from('historico_acessos').insert([{
+                            usuario_email: email,
+                            acao: 'Login efetuado',
+                            detalhes: `Acesso via ${isMobile}`
+                        }]);
+                    } catch (logError) {
+                        console.error('Erro ao registar histórico:', logError);
+                    }
+
                 } catch (err) {
                     console.error('Erro ao buscar o nível de acesso do utilizador:', err);
                     if (email === 'sentinela.command@gmail.com') {
@@ -164,9 +178,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (btnLogout) {
         btnLogout.addEventListener('click', async (e) => {
             e.preventDefault();
+            
+            // Regista o Logout no histórico antes de destruir a sessão
+            try {
+                const { data: { session } } = await window.supabaseClient.auth.getSession();
+                if (session && session.user) {
+                    await window.supabaseClient.from('historico_acessos').insert([{
+                        usuario_email: session.user.email,
+                        acao: 'Logout efetuado',
+                        detalhes: 'Encerramento manual de sessão'
+                    }]);
+                }
+            } catch (err) { console.error('Erro ao registar logout:', err); }
+
             const { error } = await window.supabaseClient.auth.signOut();
             
-            // Limpa o cargo salvo no navegador ao sair
             localStorage.removeItem('user_role');
             localStorage.removeItem('user_name');
 
@@ -225,13 +251,11 @@ function togglePasswordVisibility(inputId, iconId) {
 
         // Alterna o ícone SVG desenhado
         if (isPassword) {
-            // Olho cortado
             eyeIcon.innerHTML = `
                 <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
                 <line x1="1" y1="1" x2="23" y2="23"></line>
             `;
         } else {
-            // Olho aberto
             eyeIcon.innerHTML = `
                 <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                 <circle cx="12" cy="12" r="3"></circle>
