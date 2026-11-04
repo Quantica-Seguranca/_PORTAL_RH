@@ -21,11 +21,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     const isRecovery = window.location.hash && window.location.hash.includes('type=recovery');
 
     if (isRecovery) {
-        // Se for recuperação, esconde o login e força a exibição do modal de nova senha
         if (loginScreen) loginScreen.style.display = 'none';
         if (modalRedefinir) modalRedefinir.style.display = 'flex';
     } else {
-        // Verificação normal de sessão ativa se não for recuperação
         const { data: { session } } = await window.supabaseClient.auth.getSession();
         if (session) {
             if (loginScreen) loginScreen.style.display = 'none';
@@ -56,25 +54,32 @@ document.addEventListener('DOMContentLoaded', async () => {
                 mensagemDiv.textContent = 'Login bem-sucedido! Carregando permissões...';
                 mensagemDiv.style.color = 'var(--success-600)';
 
-                // NOVA IMPLEMENTAÇÃO: Busca o perfil (role) do usuário na tabela 'usuarios' e salva no navegador
+                // NOVA IMPLEMENTAÇÃO: Busca o perfil na tabela 'colaboradores' e salva no navegador
                 try {
                     const { data: userData, error: userError } = await window.supabaseClient
-                        .from('usuarios')
-                        .select('role, nome')
+                        .from('colaboradores')
+                        .select('perfil, nome_completo')
                         .eq('email', email)
                         .single();
 
                     if (userData && !userError) {
-                        // Salva o nível corporativo para validar regras de acesso nas outras telas
-                        localStorage.setItem('user_role', userData.role);
-                        localStorage.setItem('user_name', userData.nome);
+                        localStorage.setItem('user_role', (userData.perfil || '').toLowerCase());
+                        localStorage.setItem('user_name', userData.nome_completo || '');
                     } else {
-                        // Em caso de não encontrar o usuário na tabela, define o nível básico por segurança
-                        localStorage.setItem('user_role', 'operador');
+                        // Se o e-mail for o do Master direto, já força master, senão operador
+                        if (email === 'sentinela.command@gmail.com') {
+                            localStorage.setItem('user_role', 'master');
+                        } else {
+                            localStorage.setItem('user_role', 'operador');
+                        }
                     }
                 } catch (err) {
-                    console.error('Erro ao buscar o nível de acesso do usuário:', err);
-                    localStorage.setItem('user_role', 'operador');
+                    console.error('Erro ao buscar o nível de acesso do utilizador:', err);
+                    if (email === 'sentinela.command@gmail.com') {
+                        localStorage.setItem('user_role', 'master');
+                    } else {
+                        localStorage.setItem('user_role', 'operador');
+                    }
                 }
 
                 setTimeout(() => {
