@@ -40,6 +40,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             e.preventDefault();
             const email = document.getElementById('login-email').value;
             const password = document.getElementById('login-senha').value;
+            
             mensagemDiv.textContent = 'Autenticando...';
             mensagemDiv.style.color = 'var(--primary-300)';
 
@@ -52,8 +53,30 @@ document.addEventListener('DOMContentLoaded', async () => {
                 mensagemDiv.textContent = 'Erro: E-mail ou senha inválidos.';
                 mensagemDiv.style.color = 'var(--danger-600)';
             } else {
-                mensagemDiv.textContent = 'Login bem-sucedido! Carregando...';
+                mensagemDiv.textContent = 'Login bem-sucedido! Carregando permissões...';
                 mensagemDiv.style.color = 'var(--success-600)';
+
+                // NOVA IMPLEMENTAÇÃO: Busca o perfil (role) do usuário na tabela 'usuarios' e salva no navegador
+                try {
+                    const { data: userData, error: userError } = await window.supabaseClient
+                        .from('usuarios')
+                        .select('role, nome')
+                        .eq('email', email)
+                        .single();
+
+                    if (userData && !userError) {
+                        // Salva o nível corporativo para validar regras de acesso nas outras telas
+                        localStorage.setItem('user_role', userData.role);
+                        localStorage.setItem('user_name', userData.nome);
+                    } else {
+                        // Em caso de não encontrar o usuário na tabela, define o nível básico por segurança
+                        localStorage.setItem('user_role', 'operador');
+                    }
+                } catch (err) {
+                    console.error('Erro ao buscar o nível de acesso do usuário:', err);
+                    localStorage.setItem('user_role', 'operador');
+                }
+
                 setTimeout(() => {
                     if (loginScreen) loginScreen.style.display = 'none';
                     window.location.reload();
@@ -137,6 +160,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         btnLogout.addEventListener('click', async (e) => {
             e.preventDefault();
             const { error } = await window.supabaseClient.auth.signOut();
+            
+            // Limpa o cargo salvo no navegador ao sair
+            localStorage.removeItem('user_role');
+            localStorage.removeItem('user_name');
+
             if (!error) {
                 window.location.reload();
             } else {
@@ -177,8 +205,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         });
     }
-
 });
+
 // Função para exibir/ocultar senha nos inputs
 function togglePasswordVisibility(inputId, iconId) {
     const passwordInput = document.getElementById(inputId);
